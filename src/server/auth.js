@@ -63,8 +63,6 @@ const sessionMiddleware = session({
 const addAuth = (app) => {
   const router = Router();
 
-  app.set('trust proxy', 1);
-
   app.use(sessionMiddleware);
   app.use(passport.authenticate('session'));
 
@@ -87,7 +85,7 @@ const addAuth = (app) => {
 
   app.use('/auth', router);
 
-  app.get('/', (req, res, next) => {
+  app.use('/', (req, res, next) => {
     if (!req.user) {
       res.redirect('/auth/keycloak/login');
     } else {

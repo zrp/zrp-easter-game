@@ -18,6 +18,9 @@ const { addAuth } = require('./auth');
 const createExpressServer = () => {
   const app = express();
 
+  app.set('trust proxy', 1);
+
+
   // Add middleware
   app.use(cors());
 
