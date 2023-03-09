@@ -13,6 +13,7 @@ const app = createExpressServer();
 const server = createServer(app);
 
 // Extend with binding for ViteExpress
+ViteExpress.config({ mode: process.env.NODE_ENV });
 ViteExpress.bind(app, server)
 
 // Extend with socket.io
