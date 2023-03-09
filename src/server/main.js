@@ -1,6 +1,8 @@
 const ViteExpress = require('vite-express');
 
-require('dotenv').config();
+const nodeEnv = process.env.NODE_ENV;
+
+if (nodeEnv !== 'production') require('dotenv').config();
 
 const { createServer } = require('http');
 
@@ -13,8 +15,8 @@ const app = createExpressServer();
 const server = createServer(app);
 
 // Extend with binding for ViteExpress
-ViteExpress.config({ mode: process.env.NODE_ENV });
 ViteExpress.bind(app, server)
+ViteExpress.config({ mode: nodeEnv });
 
 // Extend with socket.io
 createSocketIoServer(server);

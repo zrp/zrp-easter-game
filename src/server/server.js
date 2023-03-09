@@ -22,7 +22,7 @@ const createExpressServer = () => {
   app.use(cors());
 
   if (process.env.NODE_ENV === 'production') {
-    app.use(helmet());
+    // app.use(helmet());
   }
 
   app.use(bodyParser.json());
