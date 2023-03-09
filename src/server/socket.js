@@ -24,27 +24,13 @@ const createSocketIoServer = (httpServer) => {
   // Middleware for authentication
   io.engine.use(sessionMiddleware);
 
-  // Middleware for user
-  io.use((client, next) => {
-    const session = client.request.session;
-    const sessionId = session.id;
-    const user = session?.passport?.user;
-
-    if (sessionId && user) {
-      next();
-    } else {
-      next(new Error('unauthorized'));
-    }
-  });
-
-
   // Add a connection handler to set listeners for client
   io.on('connection', async (client) => {
     l.info(`New connection on socket with id=${client.id}`);
 
     const session = client.request.session;
     const sessionId = session.id;
-    const user = session.passport.user;
+    const user = session?.passport?.user;
 
     require('./listeners/session')(io, client, user, sessionId);
 
