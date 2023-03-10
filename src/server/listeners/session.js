@@ -1,22 +1,21 @@
 const { setUserStatus, getUsers } = require('../services/userService');
 const l = require('../logger');
 
-const SESSION_RELOAD_INTERVAL = 30 * 1000;
-
 module.exports = (io, client, user, sessionId) => {
-  // Reload session from time to time
-  const timer = setInterval(() => {
-    client.request.session.reload(async (err) => {
-      l.warn(`Reloading session from socket id ${client.id}`);
-      if (err) { client.conn.close() }
+  client.use((__, next) => {
+    client.request.session.reload((err) => {
+      if (err) {
+        // forces the client to reconnect
+        client.conn.close();
+      } else {
+        next();
+      }
     });
-  }, SESSION_RELOAD_INTERVAL);
-
+  });
 
   // Handle disconnections
   client.on("disconnect", async () => {
     l.warn(`Connection on socket with id=${client.id} was disconnected`);
-    clearInterval(timer);
 
     if (!user || !sessionId) return;
     // Compute number of sockets connect to user session (therefore, how many tabs the user has)

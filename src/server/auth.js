@@ -1,8 +1,8 @@
-const { Router } = require("express");
+const { Router, static } = require("express");
 const passport = require("passport");
 const OIDC = require('passport-openidconnect');
 const GoogleStrategy = require('passport-google-oidc');
-const session = require('express-session');
+const expressSession = require('express-session');
 const { default: RedisStore } = require('connect-redis');
 
 const redisClient = require('./database');
@@ -35,25 +35,21 @@ passport.use(new GoogleStrategy({
 }));
 
 passport.serializeUser(function (user, cb) {
-  process.nextTick(function () {
-    cb(null, { ...user });
-  });
+  cb(null, { ...user });
 });
 
 passport.deserializeUser(function (user, cb) {
-  process.nextTick(function () {
-    return cb(null, user);
-  });
+  cb(null, user);
 });
 
-const sessionMiddleware = session({
+const session = expressSession({
   store: new RedisStore({ client: redisClient, prefix: "session:", ttl: 86400 }),
   secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
+  resave: true,
+  saveUninitialized: true,
   name: "zes",
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: false,
     httpOnly: true,
     sameSite: false,
     maxAge: 600 * 1000 // 600s = 10min,
@@ -63,10 +59,19 @@ const sessionMiddleware = session({
 const addAuth = (app) => {
   const router = Router();
 
-  app.use(sessionMiddleware);
+  app.use(session);
   app.use(passport.authenticate('session'));
 
-  // Logins
+  app.get('/', passport.authenticate('session'), (req, res, next) => {
+    if (!req.user) {
+      res.redirect('/auth/keycloak/login');
+
+      return;
+    }
+
+    next()
+  });
+
   router.get('/keycloak/login', passport.authenticate('openidconnect'), () => { });
   router.get('/google/login', passport.authenticate('google'), () => { });
 
@@ -74,36 +79,27 @@ const addAuth = (app) => {
   router.get('/keycloak/callback', passport.authenticate('openidconnect', {
     scope: ['profile', 'openid', 'email'],
     successReturnToOrRedirect: '/',
-    failureRedirect: '/auth/keycloak/login',
-  }), () => { });
+    failureRedirect: '/',
+  }), () => {
+    res.redirect('/');
+  });
 
   router.get('/google/callback', passport.authenticate('google', {
     scope: ['profile', 'openid', 'email'],
     successReturnToOrRedirect: '/',
-    failureRedirect: '/auth/google/login',
+    failureRedirect: '/',
   }), () => { });
 
   app.use('/auth', router);
 
-  app.use('/', (req, res, next) => {
-    if (!req.user) {
-      res.redirect('/auth/keycloak/login');
-    } else {
-      next();
-    }
-  })
-
-  app.post('/logout', (req, res, next) => {
-    req.logout(err => {
-      if (err) return next(err);
-
-      res.redirect('/');
-    });
-  })
+  if (process.env.NODE_ENV === 'production') {
+    app.use('/', passport.authenticate('session'), static('dist'), static('public'));
+    app.use('/assets', passport.authenticate('session'), static('dist/assets'));
+  }
 }
 
 
 module.exports = {
   addAuth,
-  sessionMiddleware,
+  session,
 };

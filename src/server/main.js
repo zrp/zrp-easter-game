@@ -15,8 +15,9 @@ const app = createExpressServer();
 const server = createServer(app);
 
 // Extend with binding for ViteExpress
-ViteExpress.bind(app, server)
-ViteExpress.config({ mode: nodeEnv });
+if (nodeEnv !== 'production') {
+  ViteExpress.bind(app, server)
+}
 
 // Extend with socket.io
 createSocketIoServer(server);
@@ -24,5 +25,5 @@ createSocketIoServer(server);
 // Start listening
 const PORT = process.env.PORT ?? 3000;
 
-server.listen(PORT, () => l.info(`Server is listening on port ${PORT}...`));
+server.listen(PORT, () => l.info(`⚡ Server is listening on port ${PORT}...`));
 

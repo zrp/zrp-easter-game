@@ -168,6 +168,7 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
   // Initial socket effects
   useEffect(() => {
     socket.on('connect', () => {
+      console.log(`connected to socket id ${socket.id}`)
       socket.emit('game:start');
     });
 
@@ -313,8 +314,7 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
           })}
         </div>
 
-        {worldQueue.length > 0 && rendering ? <div ref={typingRef} className='text-xs opacity-25 ml-4 mb-2 bg-gray-600 rounded-md w-24 text-left p-1 px-2 '>Digitando<span></span></div> : <></>}
-
+        {worldQueue.length > 0 && rendering ? <div ref={typingRef} className='text-xs ml-4 mb-2 bg-gray-900 text-gray-100 rounded-md w-24 text-left p-1 px-2 '>Digitando<span></span></div> : <></>}
 
 
         <div className={`flex items-top transition-all fixed p-4 rounded-xl bg-red-500 w-2/5 top-16 right-4 ${error?.message == '' ? '-translate-y-40' : 'translate-y-0'}`}>

@@ -18,19 +18,20 @@ const { addAuth } = require('./auth');
 const createExpressServer = () => {
   const app = express();
 
-  app.set('trust proxy', 1);
+  app.enable('trust proxy');
+  addAuth(app);
 
 
   // Add middleware
   app.use(cors());
 
-  // if (process.env.NODE_ENV === 'production') {
-  // app.use(helmet());
-  // }
+  if (process.env.NODE_ENV === 'production') {
+    app.use(helmet());
+  }
 
   app.use(bodyParser.json());
   app.use(morgan('\x1B[2m:timestamp\x1b[0m \x1B[1m\x1B[36m[server]\x1b[0m :remote-addr - :remote-user \x1b[1m\x1b[35m:method\x1b[0m \x1b[1m\x1b[35m:url\x1b[0m \x1b[1m\x1b[35mHTTP/:http-version\x1b[0m \x1b[1m\x1b[32m:status\x1b[0m - :sessionid'));
-  addAuth(app);
+
 
   return app;
 }
