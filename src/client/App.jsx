@@ -13,6 +13,10 @@ import uiSound from './assets/sounds/ui/wind1.wav';
 import sendSvg from './assets/send.svg';
 import alertSvg from './assets/alert.svg';
 
+// rxjs
+import { of, fromEvent, from } from 'rxjs';
+import { bufferTime, filter, switchMap, tap, map, buffer } from 'rxjs/operators';
+
 // Services
 import socket from './socket';
 import _ from 'lodash';
@@ -104,12 +108,12 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
     socket.emit(`ui:who_is`, { id });
   }
 
-  const scrollToBottom = () => {
+  const scrollToBottom = (animate = true) => {
     if (!document.getElementById('root')) return;
 
     const root = document.getElementById('root');
 
-    root.scrollTo({ left: 0, top: root.scrollHeight + 400, behavior: 'smooth' });
+    root.scrollTo({ left: 0, top: root.scrollHeight + 100, behavior: animate ? 'smooth' : 'auto' });
   }
 
   const handleShortcut = (ev) => {
@@ -141,16 +145,22 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
     ev.stopPropagation();
   }
 
-  const handleSubmit = (ev) => {
+  const handleSubmit = async (ev) => {
     ev.preventDefault();
 
     if (prompt == '') return;
 
-    socket.emit(`prompt`, { prompt });
+    try {
+      const response = await socket.timeout(15000).emitWithAck('prompt', { prompt });
+      console.log(`received ${response}`);
+    } catch (err) {
+      console.error(`server did not ack`, err);
+    }
 
     setPrompt('');
 
     promptInputRef.current?.focus();
+    scrollToBottom();
   }
 
   const openView = (shortcut) => {
@@ -179,14 +189,14 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
     socket.on('game:loaded', async (data) => {
       setIsConnected(true);
 
-      await onLoaded();
-
       console.log(`Game loaded with data`, data)
 
       const { user, world } = data;
 
       setUser(user);
       setWorld(world);
+
+      await onLoaded();
     });
 
     socket.on('ui:user_list', (users) => {
@@ -215,61 +225,70 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
 
   // Game response effects
   useEffect(() => {
-    socket.on('game:response', (data, callback) => {
-      console.log(`Received game:response`, data);
-      const { worldAdd, error: e } = data;
+    const sub$ = of(socket).pipe(
+      switchMap(socket => fromEvent(socket, 'game:response')),
+      switchMap(([data, callback]) => {
+        callback("SYN_CLIENT");
+        return of(data);
+      }),
+      tap(data => {
+        if (data.error) {
+          if (error?.timeout) clearTimeout(error?.timeout);
 
-      callback?.("ACK");
+          const { message } = data.error;
 
-      if (e) {
-        if (error?.timeout) clearTimeout(error?.timeout);
-
-        const timeout = setTimeout(() => setError({ message: '', timeout: null }), 3000);
-        setError({ message: e.message, timeout });
-      }
-
-      if (worldAdd) {
-        setWorldQueue([...worldQueue, worldAdd]);
-      }
+          const timeout = setTimeout(() => setError({ message: '', timeout: null }), 3000);
+          setError({ message, timeout });
+        }
+      }),
+      filter(data => !!data?.worldAdd?.prompt),
+      map(data => data.worldAdd),
+    ).subscribe((data) => {
+      console.log(`Appending data to world`, data);
+      setWorld([...world, data]);
+      scrollToBottom();
     });
 
     return () => {
-      socket.off('game:response');
+      sub$.unsubscribe();
     }
-  }, [error, worldQueue]);
+  }, [error, world]);
 
-  useEffect(() => {
-    const addToWorld = (next, afterRender) => {
-      const newWorld = [...world, {
-        ...next, afterRender,
-      }];
+  // useEffect(() => {
+  //   const addToWorld = (next, afterRender) => {
+  //     const newWorld = [...world, {
+  //       ...next, afterRender,
+  //     }];
 
-      setWorld(newWorld);
-      scrollToBottom();
-    };
+  //     setWorld(newWorld);
+  //     scrollToBottom();
+  //   };
 
-    if (worldQueue.length == 0) {
-      promptInputRef?.current?.focus();
-    }
+  //   scrollToBottom(false);
 
 
-    if (worldQueue.length == 0 || rendering) {
-      return;
-    };
+  //   if (worldQueue.length == 0) {
+  //     promptInputRef?.current?.focus();
+  //   }
 
-    setRendering(true);
+  //   if (worldQueue.length == 0 || rendering) {
+  //     return;
+  //   };
 
-    const [next, ...nextWorldQueue] = worldQueue;
+  //   setRendering(true);
 
-    setWorldQueue(nextWorldQueue);
+  //   const [next, ...nextWorldQueue] = worldQueue;
 
-    addToWorld(next, () => {
-      setRendering(false);
-    })
+  //   setWorldQueue(nextWorldQueue);
 
-    return () => {
-    }
-  }, [world, worldQueue, rendering])
+  //   addToWorld(next, () => {
+  //     setRendering(false);
+  //   })
+
+
+  //   return () => {
+  //   }
+  // }, [world, worldQueue, rendering])
 
   // useEffect(() => {
   //   if (!uiSoundRef.current) retur     n;
@@ -281,7 +300,7 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
   return <>
     {/* <audio src={uiSound} ref={uiSoundRef}></audio> */}
     <div className="text-xl w-full h-full relative font-mono mx-auto">
-      <div id="game" className='w-full h-100 flex flex-col min-h-full top-0 left-0 text-white bg-gray-800'>
+      <div id="game" className='w-full h-100 flex flex-col min-h-full top-0 left-0 text-white bg-gray-900'>
         <nav className='w-full h-10 flex border-b border-gray-50 items-center justify-around sticky top-0 z-50 bg-gray-900'>
           <div className="text-center h-full mr-auto items-center justify-center ml-2 text-sm hidden md:flex">
             Páscoa/23
@@ -306,11 +325,20 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
           </div>
         </nav>
 
-        <div ref={terminalRef} id="terminal" className='p-4 min-h-full flex-grow relative'>
+        <div id="terminal" className='p-4 min-h-full flex-grow relative'>
           {world.map((prompt, index) => {
             if (!prompt) return;
 
-            return <TypedText key={index} text={prompt.prompt} onClick={onTipClick} animate={prompt.animate} interactive={prompt.interactive} who={prompt.who} whoIs={whoIs} afterRender={prompt?.afterRender} />
+            return <TypedText
+              key={index}
+              text={prompt.prompt}
+              onClick={onTipClick}
+              animate={prompt.animate}
+              interactive={prompt.interactive}
+              who={prompt.who}
+              whoIs={whoIs}
+              afterRender={prompt?.afterRender}
+            />
           })}
         </div>
 

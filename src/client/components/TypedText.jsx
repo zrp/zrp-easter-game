@@ -1,24 +1,29 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLocalStorage } from "../hooks/storage";
 
 const TYPE_SPEED = 50;
 
 const getTextDynamicGroups = (text, onClick, interactive = false) => (text.match(/\$(.*?)\$/gmi) ?? []).map((word, index) => {
-  const text = word.match(/\[(.*?)\]/mi)[1];
-  const [ev, extra] = (word.match(/\((.*?)\)/)[1]).split(',');
-  const token = `$${index}`;
+  try {
+    const text = word.match(/\[(.*?)\]/mi)[1];
+    const [ev, extra] = (word.match(/\((.*?)\)/)[1]).split(',');
+    const token = `$${index}`;
 
-  const children = text.split('').map(LetterToElement);
+    const children = text.split('').map(LetterToElement);
 
-  let rendered = children;
+    let rendered = children;
 
-  if (interactive) {
-    rendered = <b className="text-blue-500 cursor-pointer word" onClick={() => onClick?.({ ev, text, extra })}>{children}</b>
-  }
+    if (interactive) {
+      rendered = <b className="text-blue-500 cursor-pointer word" onClick={() => onClick?.({ ev, text, extra })}>{children}</b>
+    }
 
-  return {
-    word,
-    token,
-    rendered
+    return {
+      word,
+      token,
+      rendered
+    }
+  } catch (err) {
+    console.error(`Error parsing text`, { text, word });
   }
 });
 
@@ -34,6 +39,7 @@ export default function TypedText(props = { text: "", animate: false, interactiv
   const ref = useRef(null);
   const { text, onClick, afterRender, animate, interactive, who, whoIs } = props;
   const [isAnimating, setIsAnimating] = useState(false);
+  const [dense] = useLocalStorage('layout:dense', true);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -101,12 +107,10 @@ export default function TypedText(props = { text: "", animate: false, interactiv
     }
   });
 
-  return (
-    <div className="flex mb-6">
-      <span onClick={() => { who && whoIs?.(who?.id) }} className={`mr-4 h-full ${who ? 'cursor-pointer' : ''}`}>
-        <b className={who?.color ?? "text-pink-400"}>{who?.name ? who.name + ":" : ">"}</b>
-      </span>
-      <div className={`flex flex-wrap opacity-0`} ref={ref}>{newText}</div>
-    </div>
-  )
+  return <div className={`flex ${dense ? 'p-0 mb-4 text-base' : 'p-3 mb-6 bg-black bg-opacity-20 rounded-xl'}`}>
+    <span onClick={() => { who && whoIs?.(who?.id) }} className={`mr-4 h-full ${who ? 'cursor-pointer' : ''}`}>
+      <b className={who?.color}>{who?.name ? who.name + ":" : ">"}</b>
+    </span>
+    <div className={`flex flex-wrap opacity-0 flex-grow`} ref={ref}>{newText}</div>
+  </div>
 }

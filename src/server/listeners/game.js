@@ -1,12 +1,11 @@
-const l = require('../logger');
-const { default: Queue } = require('queue');
+const l = require("../logger");
 
-const { getWorldState, push, getResponder } = require('../services/gameService');
-const { getUser } = require('../services/userService');
+const { getWorldState, getResponder, isCooldownActive, setCooldown } = require("../services/gameService");
+const { getUser } = require("../services/userService");
+const { getIntent } = require("../services/nlpService");
 
-const GameEngine = require('../engine/main');
-const Characters = require('../engine/characters');
-const { getIntent } = require('../services/wordService');
+const GameEngine = require("../engine/main");
+const Characters = require("../engine/characters");
 
 module.exports = async (io, client, { id: userId }, sessionId) => {
   l.info(`Registering listeners for game`);
@@ -14,7 +13,7 @@ module.exports = async (io, client, { id: userId }, sessionId) => {
   const user = await getUser(userId);
   const world = await getWorldState(user);
 
-  client.emit('game:loaded', { user, world });
+  client.emit("game:loaded", { user, world });
 
   l.debug(`Loaded user ${user.id} from storage`);
   l.debug(`Loaded world associated with ${user.id}, world length is ${world.length}`);
@@ -28,47 +27,72 @@ module.exports = async (io, client, { id: userId }, sessionId) => {
 
   l.debug(`Loaded lastState for user: ${JSON.stringify(lastState, null, 2)}`);
 
-  const game = GameEngine(user, responder);
+  const engine = GameEngine(user, responder);
 
-  const fsm = game(lastState?.fsm?.state, lastState?.context);
+  const game = engine(lastState?.fsm?.state, null);
 
-  fsm.start();
+  game.start();
 
-  if (world.length == 0) {
-    fsm.send('startGame');
+  if (world.length === 0) {
+    game.send("startGame");
   }
 
   l.info(`⚡ Game started!`);
 
-
   // Register a prompt handler to manipulate the fsm
-  client.on('prompt', async ({ prompt }) => {
-    responder({
-      interactive: false, animate: false, prompt, who: {
-        id: "99-user",
-        name: '(você)',
-        color: "text-orange-400",
-      }
-    });
+  client.on("prompt", async ({ prompt }, cb) => {
+    cb?.("SYN_SERVER");
 
-    const intent = await getIntent(prompt);
+    const isCooldown = await isCooldownActive(user, "prompt");
 
-    if (intent == 'None') {
-      responder({
-        interactive: true,
-        animate: true,
-        prompt: "Não entendi o que você quis dizer. Precisa de $[ajuda](ui:help)$?",
-        who: {
-          id: null,
-          name: null,
-          color: "text-red-500",
-        }
-      }, false)
+    // Chill-out dude!
+    if (isCooldown) {
+      responder(
+        {
+          error: { message: "Você não pode mandar tantas mensagens assim 👀" },
+        },
+        false,
+      );
       return;
     }
 
-    l.debug(`Prompt ${prompt} generated intent ${intent}, testing against fsm`);
+    await setCooldown(user, "prompt");
 
-    fsm.send(intent);
+    const intent = await getIntent(prompt);
+
+    l.debug(`Prompt ${prompt} generated intent ${intent}`);
+
+    const saveUserPrompt = intent != "None";
+
+    responder(
+      {
+        worldAdd: {
+          interactive: false,
+          animate: false,
+          prompt,
+          who: Characters.PLAYER,
+        },
+      },
+      saveUserPrompt,
+    );
+
+    if (intent == "None") {
+      responder(
+        {
+          worldAdd: {
+            interactive: true,
+            animate: true,
+            prompt: "Não entendi o que você quis dizer. Precisa de $[ajuda](ui:help)$?",
+            who: null,
+          },
+        },
+        false,
+      );
+      return;
+    }
+
+    l.debug(`Testing ${intent} against GameEngine...`);
+
+    game.send(intent);
   });
-}
+};

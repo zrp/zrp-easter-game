@@ -29,11 +29,12 @@ module.exports = async (io, client, { id: userId }, sessionId) => {
     await setCooldown(user, key);
 
     // User request info about itself
-    if (id == '99-user') {
+    if (id == Characters.PLAYER.id) {
       responder({
         worldAdd: {
           prompt: user.description,
           interactive: true,
+          who: Characters.NARRATOR,
           animate: true
         }
       }, false)
@@ -45,6 +46,7 @@ module.exports = async (io, client, { id: userId }, sessionId) => {
       responder({
         error: { message: "Você ainda não conhece esse personagem (ou ele não existe)" }
       }, false)
+      return;
     }
 
     responder({

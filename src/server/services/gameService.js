@@ -23,13 +23,13 @@ async function isCooldownActive(user, action) {
   return await redisClient.exists(`users:cooldown:${user.id}:${action}`);
 }
 
-async function setCooldown(user, action) {
+async function setCooldown(user, action, ttl = 3) {
   await redisClient.set(`users:cooldown:${user.id}:${action}`, 1);
-  await redisClient.expire(`users:cooldown:${user.id}:${action}`, 5);
+  await redisClient.expire(`users:cooldown:${user.id}:${action}`, ttl);
 }
 
 function getResponder(io, sessionId, user) {
-  const responder = (data, save = true) => {
+  const responder = async (data, save = true) => {
     return new Promise((resolve, reject) => io.to(sessionId).timeout(ACK_TIMEOUT).emit("game:response", data, async (err, response) => {
       if (err) {
         l.error(`Some clients did not ack the game:response in time`);
@@ -37,13 +37,14 @@ function getResponder(io, sessionId, user) {
       } else {
         l.debug(`Received ack from client: ${response}`);
         if (save && data?.worldAdd) await push(user, data?.worldAdd);
+
         resolve();
       }
     }));
   };
 
   if (!queues[user.id]) {
-    queues[user.id] = new Queue({ concurrency: 1, autostart: true, results: [], timeout: ACK_TIMEOUT })
+    queues[user.id] = new Queue({ concurrency: 1, autostart: true, results: [], timeout: ACK_TIMEOUT - 5000 })
   }
 
   return (data, save = true) => {
