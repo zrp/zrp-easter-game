@@ -1,31 +1,26 @@
+require("dotenv").config();
+
 const ViteExpress = require("vite-express");
-
-const nodeEnv = process.env.NODE_ENV;
-
-if (nodeEnv !== "production") require("dotenv").config();
-
 const { createServer } = require("http");
 
+// Local imports
 const { createExpressServer } = require("./server");
 const { createSocketIoServer } = require("./socket");
 const l = require("./logger");
-const { train } = require("./services/nlpService");
+const trainAllModels = require("./engine/trainAllModels");
 
 // Create base express server
 const app = createExpressServer();
 const server = createServer(app);
-
-// Extend with binding for ViteExpress
-if (nodeEnv !== "production") {
-  ViteExpress.bind(app, server);
-}
-
-// Extend with socket.io
 createSocketIoServer(server);
 
 // Start listening
 (async () => {
-  if (nodeEnv !== "production") await train();
+  if (process.env.NODE_ENV !== "production") {
+    ViteExpress.bind(app, server);
+
+    await trainAllModels();
+  }
 
   const PORT = process.env.PORT ?? 3000;
 

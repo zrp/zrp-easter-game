@@ -1,24 +1,24 @@
-const socketIO = require('socket.io');
+const socketIO = require("socket.io");
 
-const { session } = require('./auth');
-const cors = require('cors');
-const { upsertUser, setUserStatus, getUsers } = require('./services/userService');
+const { session } = require("./auth");
+const cors = require("cors");
+const { upsertUser, setUserStatus, getUsers } = require("./services/userService");
 
-const l = require('./logger');
-const { getResponder } = require('./services/gameService');
-const { default: Queue } = require('queue');
-const { default: helmet } = require('helmet');
-const passport = require('passport');
+const l = require("./logger");
+const { getResponder } = require("./services/gameService");
+const { default: Queue } = require("queue");
+const { default: helmet } = require("helmet");
+const passport = require("passport");
 
 /**
  * Creates a SocketIO server to manage the game
  * state and transfer state between client and server.
- * 
+ *
  * It also handles authentication / authorization at
  * the socket level, using the same session middleware
  * exported by the auth layer.
- * 
- * @param {*} httpServer 
+ *
+ * @param {*} httpServer
  */
 const createSocketIoServer = (httpServer) => {
   // Create server
@@ -31,7 +31,7 @@ const createSocketIoServer = (httpServer) => {
   // io.engine.use(helmet());
 
   // Add a connection handler to set listeners for client
-  io.on('connection', async (client) => {
+  io.on("connection", async (client) => {
     l.info(`New connection on socket with id=${client.id}`);
 
     const sessionId = client.request?.session?.id;
@@ -49,20 +49,21 @@ const createSocketIoServer = (httpServer) => {
     await upsertUser(user);
 
     // Register listeners
-    require('./listeners/session')(io, client, user, sessionId);
-    require('./listeners/ui')(io, client, user, sessionId);
-    require('./listeners/game')(io, client, user, sessionId);
+    require("./listeners/session")(io, client, user, sessionId);
+    require("./listeners/ui")(io, client, user, sessionId);
+    require("./listeners/game")(io, client, user, sessionId);
 
     // Set user as online
-    await setUserStatus(user, 'online');
+    await setUserStatus(user, "online");
 
     // Get all users and update everyone about current users
-    l.info(`Updating everyone about current online users`)
-    io.emit('ui:user_list', await getUsers());
+    l.info(`Updating everyone about current online users`);
+    io.emit("ui:user_list", await getUsers());
   });
 
-}
+  return io;
+};
 
 module.exports = {
   createSocketIoServer,
-}
+};

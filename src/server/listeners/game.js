@@ -41,11 +41,13 @@ module.exports = async (io, client, { id: userId }, sessionId) => {
 
   // Register a prompt handler to manipulate the fsm
   client.on("prompt", async ({ prompt }, cb) => {
-    cb?.("SYN_SERVER");
+    if (cb) {
+      l.info(`Calling ack on server`);
+      cb("SYN_SERVER");
+    }
 
     const isCooldown = await isCooldownActive(user, "prompt");
 
-    // Chill-out dude!
     if (isCooldown) {
       responder(
         {
@@ -58,11 +60,7 @@ module.exports = async (io, client, { id: userId }, sessionId) => {
 
     await setCooldown(user, "prompt");
 
-    const intent = await getIntent(prompt);
-
-    l.debug(`Prompt ${prompt} generated intent ${intent}`);
-
-    const saveUserPrompt = intent != "None";
+    const saveUserPrompt = true;
 
     responder(
       {
@@ -76,23 +74,8 @@ module.exports = async (io, client, { id: userId }, sessionId) => {
       saveUserPrompt,
     );
 
-    if (intent == "None") {
-      responder(
-        {
-          worldAdd: {
-            interactive: true,
-            animate: true,
-            prompt: "Não entendi o que você quis dizer. Precisa de $[ajuda](ui:help)$?",
-            who: null,
-          },
-        },
-        false,
-      );
-      return;
-    }
+    l.debug(`Sending prompt ${prompt} to GameEngine...`);
 
-    l.debug(`Testing ${intent} against GameEngine...`);
-
-    game.send(intent);
+    game.send("speak", { prompt });
   });
 };
