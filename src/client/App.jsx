@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import TypedText from './components/TypedText';
 import Modal from './components/Modal';
@@ -14,7 +14,7 @@ import sendSvg from './assets/send.svg';
 import alertSvg from './assets/alert.svg';
 
 // rxjs
-import { of, fromEvent, from } from 'rxjs';
+import { of, fromEvent, from, throwError } from 'rxjs';
 import { bufferTime, filter, switchMap, tap, map, buffer } from 'rxjs/operators';
 
 // Services
@@ -113,7 +113,7 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
 
     const root = document.getElementById('root');
 
-    root.scrollTo({ left: 0, top: root.scrollHeight + 100, behavior: animate ? 'smooth' : 'auto' });
+    root.scrollTo({ left: 0, top: root.scrollHeight + 400, behavior: animate ? 'smooth' : 'auto' });
   }
 
   const handleShortcut = (ev) => {
@@ -228,67 +228,87 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
     const sub$ = of(socket).pipe(
       switchMap(socket => fromEvent(socket, 'game:response')),
       switchMap(([data, callback]) => {
-        callback("SYN_CLIENT");
-        return of(data);
+        callback("ACK");
+
+        return of(data.worldAdd);
       }),
-      tap(data => {
-        if (data.error) {
-          if (error?.timeout) clearTimeout(error?.timeout);
+      bufferTime(500),
+      filter(e => e.length > 0),
+    ).subscribe((add) => {
+      console.log(`Buffer:`, add);
+      let nextWorld = [...worldQueue, ...add];
 
-          const { message } = data.error;
-
-          const timeout = setTimeout(() => setError({ message: '', timeout: null }), 3000);
-          setError({ message, timeout });
+      nextWorld = add.map((v, index) => {
+        v.afterRender = () => {
+          setWorldQueue(nextWorld.slice(index + 1));
         }
-      }),
-      filter(data => !!data?.worldAdd?.prompt),
-      map(data => data.worldAdd),
-    ).subscribe((data) => {
-      console.log(`Appending data to world`, data);
-      setWorld([...world, data]);
+        return v;
+      });
+
+      setWorldQueue(nextWorld);
       scrollToBottom();
     });
 
     return () => {
       sub$.unsubscribe();
     }
-  }, [error, world]);
+  }, [worldQueue]);
 
-  // useEffect(() => {
-  //   const addToWorld = (next, afterRender) => {
-  //     const newWorld = [...world, {
-  //       ...next, afterRender,
-  //     }];
+  useEffect(() => {
+    const errors$ = of(socket).pipe(
+      switchMap(socket => fromEvent(socket, 'game:error')),
+      switchMap(([data, callback]) => {
+        callback("ACK");
 
-  //     setWorld(newWorld);
-  //     scrollToBottom();
-  //   };
+        return of(data.error);
+      })
+    ).subscribe(({ message }) => {
+      if (error?.timeout) clearTimeout(error?.timeout);
 
-  //   scrollToBottom(false);
+      const timeout = setTimeout(() => setError({ message: '', timeout: null }), 3000);
+      setError({ message, timeout });
+    });
+
+    return () => {
+      errors$.unsubscribe();
+    }
+  }, [error])
+
+  useLayoutEffect(() => {
+    const addToWorld = (next, afterRender) => {
+      const newWorld = [...world, {
+        ...next, afterRender,
+      }];
+
+      setWorld(newWorld);
+      scrollToBottom();
+    };
+
+    scrollToBottom(false);
 
 
-  //   if (worldQueue.length == 0) {
-  //     promptInputRef?.current?.focus();
-  //   }
+    if (worldQueue.length == 0) {
+      promptInputRef?.current?.focus();
+    }
 
-  //   if (worldQueue.length == 0 || rendering) {
-  //     return;
-  //   };
+    if (worldQueue.length == 0 || rendering) {
+      return;
+    };
 
-  //   setRendering(true);
+    setRendering(true);
 
-  //   const [next, ...nextWorldQueue] = worldQueue;
+    const [next, ...nextWorldQueue] = worldQueue;
 
-  //   setWorldQueue(nextWorldQueue);
+    setWorldQueue(nextWorldQueue);
 
-  //   addToWorld(next, () => {
-  //     setRendering(false);
-  //   })
+    addToWorld(next, () => {
+      setRendering(false);
+    })
 
 
-  //   return () => {
-  //   }
-  // }, [world, worldQueue, rendering])
+    return () => {
+    }
+  }, [world, worldQueue, rendering])
 
   // useEffect(() => {
   //   if (!uiSoundRef.current) retur     n;
@@ -344,14 +364,13 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
 
         {worldQueue.length > 0 && rendering ? <div ref={typingRef} className='text-xs ml-4 mb-2 bg-gray-900 text-gray-100 rounded-md w-24 text-left p-1 px-2 '>Digitando<span></span></div> : <></>}
 
-
         <div className={`flex items-top transition-all fixed p-4 rounded-xl bg-red-500 w-2/5 top-16 right-4 ${error?.message == '' ? '-translate-y-40' : 'translate-y-0'}`}>
           <img src={alertSvg} className='w-6 h-6 mr-4' />
           <p className='text-sm'>{error?.message}</p>
         </div>
 
-        <form onSubmit={handleSubmit} className='h-10 backdrop-blur-lg bg-gray-900 border-t border-t-gray-100 sticky bottom-0 z-50 left-0 w-full flex align-items-center'>
-          <input ref={promptInputRef} type="text" name="prompt" value={prompt} onChange={handleChange} disabled={worldQueue.length > 0} className="w-full bg-transparent font-mono text-sm p-2 text-white outline-none" />
+        <form onSubmit={handleSubmit} className='h-16 backdrop-blur-lg bg-gray-900 border-t border-t-gray-100 sticky bottom-0 z-50 left-0 w-full flex align-items-center'>
+          <input ref={promptInputRef} type="text" name="prompt" value={prompt} onChange={handleChange} disabled={worldQueue.length > 0} className="w-full bg-transparent font-mono p-2 text-white outline-none" />
           <button type="submit" className={`text-sm p-2 mx-4 ${prompt == '' ? 'opacity-50' : 'opacity-100'} transition-opacity`} disabled={prompt == ''}>
             <img src={sendSvg} className="h-full cursor-pointer" />
           </button>

@@ -7,7 +7,7 @@ const { createServer } = require("http");
 const { createExpressServer } = require("./server");
 const { createSocketIoServer } = require("./socket");
 const l = require("./logger");
-const trainAllModels = require("./engine/trainAllModels");
+const { trainAll } = require("./engine/models");
 
 // Create base express server
 const app = createExpressServer();
@@ -19,7 +19,7 @@ createSocketIoServer(server);
   if (process.env.NODE_ENV !== "production") {
     ViteExpress.bind(app, server);
 
-    await trainAllModels();
+    await trainAll();
   }
 
   const PORT = process.env.PORT ?? 3000;

@@ -1,5 +1,5 @@
-const { setUserStatus, getUsers } = require('../services/userService');
-const l = require('../logger');
+const { setUserStatus, getUsers } = require("../services/userService");
+const l = require("../logger");
 
 module.exports = (io, client, user, sessionId) => {
   client.use((__, next) => {
@@ -18,17 +18,17 @@ module.exports = (io, client, user, sessionId) => {
     l.warn(`Connection on socket with id=${client.id} was disconnected`);
 
     if (!user || !sessionId) return;
-    // Compute number of sockets connect to user session (therefore, how many tabs the user has)
+    // Compute number of sockets connected to user session (therefore, how many tabs the user has)
     const clients = io.sockets.adapter.rooms.get(sessionId);
 
     const numClients = clients ? clients.size : 0;
 
     // If no more sessions for user, set offline
     if (numClients == 0) {
-      await setUserStatus(user, 'offline');
+      await setUserStatus(user, "offline");
 
       const users = await getUsers();
-      await io.emit('ui:user_list', users);
+      await io.emit("ui:user_list", users);
     }
   });
-}
+};

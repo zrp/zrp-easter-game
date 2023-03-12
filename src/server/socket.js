@@ -1,14 +1,9 @@
 const socketIO = require("socket.io");
 
 const { session } = require("./auth");
-const cors = require("cors");
 const { upsertUser, setUserStatus, getUsers } = require("./services/userService");
 
 const l = require("./logger");
-const { getResponder } = require("./services/gameService");
-const { default: Queue } = require("queue");
-const { default: helmet } = require("helmet");
-const passport = require("passport");
 
 /**
  * Creates a SocketIO server to manage the game
@@ -18,17 +13,13 @@ const passport = require("passport");
  * the socket level, using the same session middleware
  * exported by the auth layer.
  *
- * @param {*} httpServer
  */
 const createSocketIoServer = (httpServer) => {
   // Create server
   const io = socketIO(httpServer);
 
   // Middleware for authentication
-  io.engine.use(session);
-  // io.engine.use(passport.authenticate('keycloak'))
-  // io.engine.use(cors());
-  // io.engine.use(helmet());
+  io.use((client, next) => session(client.request, {}, next));
 
   // Add a connection handler to set listeners for client
   io.on("connection", async (client) => {
@@ -53,10 +44,10 @@ const createSocketIoServer = (httpServer) => {
     require("./listeners/ui")(io, client, user, sessionId);
     require("./listeners/game")(io, client, user, sessionId);
 
-    // Set user as online
+    // Set user online
     await setUserStatus(user, "online");
 
-    // Get all users and update everyone about current users
+    // update everyone about current users
     l.info(`Updating everyone about current online users`);
     io.emit("ui:user_list", await getUsers());
   });

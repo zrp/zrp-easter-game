@@ -8,7 +8,7 @@ const Characters = {
   },
   NARRATOR: {
     id: "01-narrator",
-    name: "(voz etérea)",
+    name: "",
     fullName: "G-man",
     color: "text-blue-300",
     description: "Não é possível dizer quem é o dono desta voz, mas ela fala profundamente com você.",

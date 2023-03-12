@@ -39,7 +39,8 @@ export default function TypedText(props = { text: "", animate: false, interactiv
   const ref = useRef(null);
   const { text, onClick, afterRender, animate, interactive, who, whoIs } = props;
   const [isAnimating, setIsAnimating] = useState(false);
-  const [dense] = useLocalStorage('layout:dense', true);
+  const [dense] = useLocalStorage('layout:dense', false);
+  const [fontSizeSm] = useLocalStorage('layout:font-sm', false);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -107,7 +108,7 @@ export default function TypedText(props = { text: "", animate: false, interactiv
     }
   });
 
-  return <div className={`flex ${dense ? 'p-0 mb-4 text-base' : 'p-3 mb-6 bg-black bg-opacity-20 rounded-xl'}`}>
+  return <div className={`flex ${fontSizeSm ? 'text-base' : ''} ${dense ? 'p-0 mb-4' : 'p-3 mb-6 bg-black bg-opacity-20 rounded-xl'}`}>
     <span onClick={() => { who && whoIs?.(who?.id) }} className={`mr-4 h-full ${who ? 'cursor-pointer' : ''}`}>
       <b className={who?.color}>{who?.name ? who.name + ":" : ">"}</b>
     </span>

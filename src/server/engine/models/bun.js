@@ -1,17 +1,26 @@
+// add2world({
+//   prompt: `Olá, me chamo ${character2front(Characters.BUN)}`,
+//   who: Characters.BUN,
+// });
+
+// add2world({
+//   prompt: `${day} eu estava em uma pequena cidade ao leste de $[Mui](ui:tip,city-mui)$, de onde sou, quando um monstro roubou minha $[cesta de ovos](ui:tip,egg-basket)$, e nem tive tempo de ir atrás dele. A última coisa que me lembro é de vê-lo indo em $[direção ao norte](ui:tip,directions-north)$. Será que você consegue me ajudar?`,
+//   who: Characters.BUN,
+// });
+
 const moment = require("moment");
 
 const { BUN, PLAYER } = require("../characters");
-const createModel = require("../createModel");
-const { tokenize2front, tokenize2nlp } = require("../text");
+const { createModel, txt2front, txt2input, txt2output } = require("./");
 
 module.exports = createModel(
   BUN.id,
   // Utterances / Data
   (manager) => {
     manager.addDocument("pt", "de que cidade você é?", "aboutMui");
+    manager.addDocument("pt", "conte mais da sua cidade?", "aboutMui");
     manager.addDocument("pt", "aonde fica mui?", "aboutMui");
     manager.addDocument("pt", "cidade de mui", "aboutMui");
-    manager.addDocument("pt", "mui", "aboutMui");
     manager.addDocument("pt", "de que cidade você é?", "aboutMui");
     manager.addDocument("pt", "cesta de ovos", "action.basketOfEggs");
     manager.addDocument("pt", "o que é a cesta de ovos", "action.basketOfEggs");
@@ -78,18 +87,20 @@ module.exports = createModel(
     manager.addDocument("pt", "até já", "action.bye");
     manager.addDocument("pt", "abraço", "action.bye");
     manager.addDocument("pt", "aonde estamos?", "whereAreWe");
-  },
-  // Answers
-  (manager) => {
+
     manager.addAnswer(
       "pt",
       "ask4help",
       `Você sempre pode me pedir ajuda. Para falar comigo, digite abaixo. Eu sou bem esperto, se eu souber te responder, responderei com prazer. Tente dizer, por exemplo, "o que é a cidade de Mui?".`,
     );
-    manager.addAnswer("pt", "action.hello", "Olá, %name%, você poderia me ajudar?!");
+    manager.addAnswer("pt", "action.hello", `Olá, ${txt2output("name")}, você poderia me ajudar?!`);
     manager.addAnswer("pt", "acceptMission", "Aaaah, muito obrigado! Se quiser eu posso te falar sobre como era o monstro, ou sobre a cidade da qual eu sou.");
     manager.addAnswer("pt", "howAreYou", `Bem não estou, claramente! 😠`);
-    manager.addAnswer("pt", "whereAreWe", "");
+    manager.addAnswer(
+      "pt",
+      "whereAreWe",
+      "Agora estamos no meio da estrada norte-sul. Ao norte fica a floresta branca, uma floresta relativamente calma e sem perigos conhecidos. Ao sul fica a entrada para o pântano de Java, saindo do pântano de Java, continuando para o leste, você chegará em Mui.",
+    );
     manager.addAnswer(
       "pt",
       "aboutMui",
@@ -117,14 +128,14 @@ module.exports = createModel(
     manager.addAnswer(
       "pt",
       "action.complaining",
-      `${tokenize2front(
-        tokenize2nlp("name"),
+      `${txt2front(
+        txt2output("name"),
         "ui:who_is",
         PLAYER.id,
       )}, não se irrite! Eu posso te ajudar. Tente me perguntar, por exemplo, "o que é a cidade de Mui?"`,
     );
     manager.addAnswer("pt", "action.tail", `Sim, um rabo longo, com longos fios na ponta, mas como te disse, não vi muita coisa, posso estar enganado.`);
-    manager.addAnswer("pt", "action.niceToMeetYou", `O prazer de te conhecer é meu, %name%! Algo em que possa ajudá-lo?`);
+    manager.addAnswer("pt", "action.niceToMeetYou", `O prazer de te conhecer é meu, {{name}}! Algo em que possa ajudá-lo?`);
     manager.addAnswer("pt", "action.nope", "Aaaah, tudo bem, outros provavelmente terão interesse em me ajudar.");
     manager.addAnswer("pt", "action.curse", "Vá @* !%#@*! E não fale mais comigo!! 🤬");
     manager.addAnswer("pt", "action.bye", "Até logo");
