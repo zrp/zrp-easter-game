@@ -1,158 +1,108 @@
 const { createMachine, interpret, assign, raise } = require("xstate");
 
-const Characters = require("./characters");
-const moment = require("moment");
+const { getUser } = require("../services/userService");
+const { getWorldState, getRenderer, getSave, saveGame, isCooldownActive, setCooldown } = require("../services/gameService");
+const l01 = require("./levels/l01");
+
+const { PLAYER } = require("./characters");
+
 const l = require("../logger");
-const { getSpeakFunction: bun } = require("./models/bun");
-const { getSpeakFunction: narrator } = require("./models/narrator");
 
-const { character2front } = require("./models");
+const createEngine = async (io, sessionId, userId) => {
+  const { user, world, save } = await loadGame(io, sessionId, userId);
 
-const STATES = {
-  WITH_BUN: "with-bun",
-  WITHOUT_BUN: "without-bun",
-  NORTH_FLOREST_01: "north-florest-01",
+  const { add2world, setError } = getRenderer(io, sessionId, user);
+
+  const saver = (save) => saveGame(user, save);
+
+  const machine = createMachine(
+    {
+      predictableActionArguments: true,
+      preserveActionOrder: true,
+      id: "game",
+      state: save,
+      context: {
+        steps: 0,
+        name: user?.name?.givenName,
+      },
+      initial: "l01",
+      on: {
+        prompt: {
+          actions: (context, prompt) => {
+            console.log(`Running prompt`, prompt);
+          },
+        },
+      },
+      states: {
+        l01: {
+          ...l01(add2world, setError),
+        },
+      },
+    },
+    {
+      actions: {
+        countSteps: assign({ steps: (context) => context.steps + 1 }),
+      },
+    },
+  );
+
+  const onTransition = async (state) => {
+    // l.debug(`FSM transitioned to ${state.value} with context ${JSON.stringify(state.context, null, 2)}`);
+    // l.debug(JSON.stringify(state, null, 2));
+    await saver(state);
+  };
+
+  const engine = interpret(machine).onTransition(onTransition);
+
+  engine.start(save?.value, save?.context);
+
+  if (world.length === 0) engine.send("startGame");
+
+  l.info(`⚡ Game started!`);
+
+  return {
+    send: async (name, prompt) => {
+      const isCooldown = await isCooldownActive(user, "prompt");
+
+      if (isCooldown) {
+        setError({ message: "Você não pode mandar tantas mensagens assim 👀" });
+        return;
+      }
+
+      await setCooldown(user, "prompt");
+
+      add2world({
+        interactive: false,
+        animate: false,
+        prompt,
+        who: PLAYER,
+      });
+
+      // TODO: add here a parser before sending data to engine
+
+      engine.send(name, { prompt });
+    },
+    engine,
+  };
 };
 
-/**
- *
- * @param {*} user - The current user
- * @param {*} add2world - A function that adds messages into the world
- * @param {*} setError - A function that set's errors into the world
- * @returns
- */
-module.exports = (user, saveGame = async () => {}, add2world = async () => {}, setError = async () => {}) => {
-  return (ctx = {}) => {
-    let fsm;
-    const context = {
-      ...ctx,
-      name: user?.name?.givenName,
-      steps: 0,
-      inventory: [],
-    };
+const loadGame = async (io, sessionId, userId) => {
+  const user = await getUser(userId);
+  const world = await getWorldState(user);
+  const save = await getSave(user);
 
-    const onTransition = async (state) => {
-      l.debug(`FSM transitioned to ${state.value} with context ${JSON.stringify(state.context, null, 2)}`);
+  l.debug(`Loaded user ${user.id} from storage`);
+  l.debug(`Loaded world associated with ${user.id}, world length is ${world.length}`);
+  l.debug(`Loaded last save game associated with ${user.id}, save is ${JSON.stringify(save, null, 2)}`);
 
-      const { who, ...save } = state;
-      await saveGame(save);
-    };
+  io.to(sessionId).emit("game:loaded", { user, world });
 
-    const states = {
-      [STATES.WITH_BUN]: {
-        exit: ["countSteps", assign({ npc: null })],
-        on: {
-          speak: {
-            target: [STATES.WITH_BUN],
-            actions: [
-              assign({
-                npc: bun,
-                who: Characters.BUN,
-              }),
-              "talk2npc",
-            ],
-          },
-          // GO TO FLOREST
-          "action.goNorth": {
-            target: [STATES.NORTH_FLOREST_01],
-            actions: ["goNorthFlorest"],
-          },
-        },
-      },
-      [STATES.WITHOUT_BUN]: {
-        entry: assign({ npc: narrator }),
-        exit: ["countSteps"],
-        on: {
-          speak: {
-            target: [STATES.WITHOUT_BUN],
-            actions: [
-              assign({
-                npc: narrator,
-                who: Characters.NARRATOR,
-              }),
-              "talk2npc",
-            ],
-          },
-          tryIntent: {
-            actions: [(context) => console.log(`HEREEEEEEEEEE`, context)],
-          },
-          goDirection: {
-            target: [STATES.WITH_BUN],
-          },
-          startGame: {
-            actions: ["startGame"],
-          },
-        },
-      },
-      [STATES.NORTH_FLOREST_01]: {
-        exit: ["countSteps"],
-        on: {
-          "action.goSouth": [STATES.WITH_BUN],
-        },
-      },
-    };
+  return { user, world, save };
+};
 
-    const actions = {
-      countSteps: assign({ steps: (context) => context.steps + 1 }),
-      startGame: async (context, event) => {
-        const name = user.name?.givenName;
-        const now = new Date();
-
-        let day = now.getHours() <= 12 ? "manhã" : now.getHours() <= 18 ? "tarde" : "noite";
-
-        add2world({
-          prompt: `bem-vindo, ${name}, nesta ${day}, como de costume, você segue o seu caminhar pela estrada norte-sul do reino de Nodeville`,
-          who: Characters.NARRATOR,
-        });
-
-        add2world({
-          prompt: `você começa a ouvir uma voz triste e espalhafatosa por perto, e fica curioso para entender de onde vem essa voz`,
-          who: Characters.NARRATOR,
-        });
-      },
-      talk2npc: async (context, { prompt }) => {
-        const { npc, who } = context;
-
-        let { intent, answer, ...args } = (await npc(prompt)) ?? { intent: "None", answer: null };
-
-        answer = intent == "None" ? "Não entendi o que você quis dizer. Precisa de $[ajuda](ui:help)$?" : answer;
-
-        if (!answer || answer == "") {
-          l.debug(`Empty answer found, set intent ${intent} to fsm`);
-          fsm.send(intent, args);
-          return;
-        }
-
-        add2world({
-          prompt: answer,
-          who,
-        });
-      },
-      goNorthFlorest: async (context, event) => {
-        add2world({
-          prompt: `Você foi para o norte, você vê uma floresta branca e ouve barulhos. Os animais correm para uma clareira branca, ao leste, e você vê um objeto brilhante no chão.`,
-        });
-      },
-    };
-
-    const machine = createMachine(
-      {
-        preserveActionOrder: true,
-        predictableActionArguments: true,
-        id: "main",
-        context,
-        initial: STATES.WITHOUT_BUN,
-        states,
-      },
-      {
-        actions,
-      },
-    );
-
-    fsm = interpret(machine).onTransition(onTransition);
-
-    return fsm;
-  };
+module.exports = {
+  createEngine,
+  loadGame,
 };
 
 //  você decide parar seu caminhar e falar com uma estranha criatura de pelos brancos. As lágrimas escorrendo por entre seus olhos, e fios pretos presos a seu corpo, mas claramente de outro ser.

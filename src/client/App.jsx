@@ -9,9 +9,9 @@ import ZRP from './pages/ZRP';
 import Settings from './pages/Settings';
 
 // UI
-import uiSound from './assets/sounds/ui/wind1.wav';
-import sendSvg from './assets/send.svg';
-import alertSvg from './assets/alert.svg';
+// import uiSound from './assets/sounds/ui/wind1.wav';
+import sendSvg from './assets/icons/send.svg';
+import alertSvg from './assets/icons/alert.svg';
 
 // rxjs
 import { of, fromEvent, from, throwError } from 'rxjs';
