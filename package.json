@@ -6,7 +6,7 @@
     "start": "NODE_ENV=production node src/server/main",
     "dev": "nodemon --inspect src/server/main.js -w src/server",
     "debug": "nodemon --inspect-brk src/server/main.js -w src/server",
-    "build": "vite build",
+    "build": "node bin/build",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -18,9 +18,9 @@ createSocketIoServer(server);
 (async () => {
   if (process.env.NODE_ENV !== "production") {
     ViteExpress.bind(app, server);
-
-    await trainAll();
   }
+
+  await trainAll();
 
   const PORT = process.env.PORT ?? 3000;
 
