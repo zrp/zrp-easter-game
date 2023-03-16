@@ -74,7 +74,7 @@ module.exports = (add2world, setError) => {
               let day = now.getHours() <= 12 ? "manhã" : now.getHours() <= 18 ? "tarde" : "noite";
 
               add2world({
-                prompt: `bem-vindo, ${name}, nesta ${day}, como de costume, você segue o seu caminhar pela estrada norte-sul do reino de Nodeville`,
+                prompt: `West of House\nYou are standing in an open field west of a white house, with a boarded front door.\nThere is a small mailbox here.`,
                 who: Characters.NARRATOR,
               });
 

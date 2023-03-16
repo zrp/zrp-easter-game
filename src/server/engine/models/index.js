@@ -5,23 +5,30 @@ const { NlpManager, ConversationContext } = require("node-nlp");
 
 const l = require("../../logger");
 
+const THRESHOLD = 0.8;
+
 /**
  *
  * @param {*} manager
  * @param {*} ctx
  * @returns
  */
-function _createSpeakFunction(manager, ctx) {
+function createSayFunction(manager, ctx) {
   return async (query) => {
     const r = await manager.process("pt", query, ctx);
 
-    console.log(r);
+    l.debug(`Raw response from nlp model: ${JSON.stringify(r, null, 2)}`);
+
+    const mostAccurateEntity = r?.entities?.sort((eB, eA) => eB.accuracy - eA.accuracy)?.[0];
 
     return {
       score: r.score,
-      intent: r.intent,
-      answer: r.intent === "None" ? null : r.answer,
-      sentiment: r.sentiment?.score ?? 0 != 0 ? (r.sentiment.score > 0 ? "Positive" : "Negative") : "Neutral",
+      intent: r.score > THRESHOLD && r.intent !== "None" ? r.intent : null,
+      answer: r.score > THRESHOLD && r.intent !== "None" ? r.answer : null,
+      sentiment: r.score > THRESHOLD ? (r.sentiment?.score ?? 0 != 0 ? (r.sentiment.score > 0 ? "Positive" : "Negative") : "Neutral") : null,
+      mostAccurateEntity,
+      value: mostAccurateEntity?.option ?? mostAccurateEntity?.resolution?.value,
+      conversationContext: ctx,
     };
   };
 }
@@ -60,7 +67,7 @@ function createModel(model, addTrainingData = (manager) => {}) {
 
   return {
     manager,
-    getSpeakFunction: (query = "", context = {}) => _createSpeakFunction(manager, new ConversationContext(context)),
+    say: (query = "", conversationContext = {}) => createSayFunction(manager, conversationContext)(query),
     train: async ({ force } = { force: false }) => {
       // Load data if exists or train (or force train)
       if (fs.existsSync(filepath) && !force) {

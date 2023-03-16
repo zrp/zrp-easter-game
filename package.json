@@ -5,6 +5,7 @@
   "scripts": {
     "start": "NODE_ENV=production node src/server/main",
     "dev": "nodemon --inspect src/server/main.js -w src/server",
+    "debug": "nodemon --inspect-brk src/server/main.js -w src/server",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -27,6 +28,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "redis": "^4.6.5",
+    "resize-observer-polyfill": "^1.5.1",
     "rxjs": "^7.8.0",
     "socket.io": "^4.6.1",
     "socket.io-client": "^4.6.1",

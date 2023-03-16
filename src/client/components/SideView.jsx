@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function SideView({ open, onClose, children } = { open: false }) {
+export default function SideView({ open, title, onClose, children } = { open: false }) {
   const closeModal = () => {
     if (onClose) {
       onClose()
@@ -10,7 +10,10 @@ export default function SideView({ open, onClose, children } = { open: false }) 
   return <div id="modal" className={`absolute w-full h-full top-0 left-0 z-50 ${open ? '' : 'hidden'}`}>
     <div id="modal-overlay" className="fixed z-20 top-0 left-0 bg-black opacity-25 w-full h-full" onClick={() => closeModal()}></div>
     <div id="modal-content" className={'text-white z-20 w-1/3 h-full rounded border border-gray-200 bg-gray-800 fixed top-0 right-0 flex flex-col'}>
-      <nav className='w-100 h-10 flex border-b border-gray-50 items-center justify-around'>
+      <nav className='w-100 h-12 flex border-b border-gray-50 items-center justify-around'>
+        <span className="ml-4">
+          {title}
+        </span>
 
         <button className='w-28 h-full flex text-center border-l border-l-gray-50 ml-auto items-center justify-center hover:bg-red-500 rounded-tr' onClick={e => closeModal()}>
           <div className="w-6 h-6">

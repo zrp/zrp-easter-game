@@ -1,51 +1,35 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react'
 
 import TypedText from './components/TypedText';
 import Modal from './components/Modal';
 import SideView from './components/SideView';
 
-// Pages
-import ZRP from './pages/ZRP';
-import Settings from './pages/Settings';
-
 // UI
 // import uiSound from './assets/sounds/ui/wind1.wav';
-import sendSvg from './assets/icons/send.svg';
 import alertSvg from './assets/icons/alert.svg';
+import zrpSvg from './assets/icons/zrp.svg';
 
 // rxjs
-import { of, fromEvent, from, throwError } from 'rxjs';
-import { bufferTime, filter, switchMap, tap, map, buffer } from 'rxjs/operators';
+import { of, fromEvent, Observable, Subscriber } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map, pairwise, skipWhile, tap } from 'rxjs/operators';
 
 // Services
-import socket from './socket';
+import socket from './services/socket';
+import shortcuts from './services/shortcuts';
 import _ from 'lodash';
 
-const Shortcuts = {
-  "Z": {
-    name: "ZRP",
-    render: (props) => <ZRP {...props}></ZRP>,
-    mode: "SideView",
-    extraProps: {}
-  },
-  "P": {
-    name: "Progresso",
-    render: (props) => <Settings {...props}></Settings>,
-    mode: "SideView",
-    extraProps: {}
-  },
-  "M": {
-    name: "Mapa",
-    render: (props) => <Settings {...props}></Settings>,
-    mode: "Modal",
-    extraProps: {}
-  },
-  ",": {
-    name: "Configurações",
-    render: (props) => <Settings {...props}></Settings>,
-    mode: "SideView",
-    extraProps: {}
-  },
+import ResizeObserver from 'resize-observer-polyfill';
+
+function resizeObserver(...elements) {
+  return new Observable((subscriber) => {
+    const resizeObserver = new ResizeObserver(
+      (entries) => subscriber.next(entries)
+    );
+
+    elements.forEach(elem => resizeObserver.observe(elem));
+
+    return () => resizeObserver.disconnect();
+  });
 }
 
 
@@ -62,6 +46,7 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
   const [rendering, setRendering] = useState(false);
   const [world, setWorld] = useState([]);
   const [worldQueue, setWorldQueue] = useState([]);
+  const [location, setLocation] = useState('');
 
   const [shortcut, setShortcut] = useState(null);
 
@@ -71,8 +56,8 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
   const promptInputRef = useRef(null);
   const uiSoundRef = useRef(null);
 
-  const typingEffect = () => {
-    return setInterval(() => {
+  const loadingEffect = () => {
+    const interval = setInterval(() => {
       if (!typingRef.current) return;
 
       const htmlEl = typingRef.current;
@@ -85,6 +70,8 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
       }
 
     }, 500)
+
+    return () => clearInterval(interval);
   }
 
   const onTipClick = ({ ev, text, extra }) => {
@@ -101,11 +88,11 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
   }
 
   const tip = (name) => {
-    socket.emit('ui:tip', { name });
+    socket.io.emit('ui:tip', { name });
   }
 
   const whoIs = (id) => {
-    socket.emit(`ui:who_is`, { id });
+    socket.io.emit(`ui:who_is`, { id });
   }
 
   const scrollToBottom = (animate = true) => {
@@ -115,28 +102,6 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
 
     root.scrollTo({ left: 0, top: root.scrollHeight + 400, behavior: animate ? 'smooth' : 'auto' });
   }
-
-  const handleShortcut = (ev) => {
-    const key = ev.key.toUpperCase();
-
-    const nextShortcut = Shortcuts[key]
-
-    if (!nextShortcut) return;
-
-    if (!ev.ctrlKey) return;
-
-    ev.preventDefault();
-
-    const isOpen = (nextShortcut.mode == 'Modal' && modalOpen || nextShortcut.mode == 'SideView' && sideViewOpen);
-
-    if (shortcut?.name == nextShortcut.name && isOpen) {
-      setSideViewOpen(false);
-      setModalOpen(false);
-      setShortcut(null);
-    } else {
-      openView(nextShortcut);
-    };
-  };
 
   const handleChange = (ev) => {
     setPrompt(ev.target.value);
@@ -151,7 +116,7 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
     if (prompt == '') return;
 
     try {
-      const response = await socket.timeout(15000).emitWithAck('prompt', { prompt });
+      const response = await socket.io.timeout(15000).emitWithAck('prompt', { prompt });
       console.log(`received ${response}`);
     } catch (err) {
       console.error(`server did not ack`, err);
@@ -163,106 +128,130 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
     scrollToBottom();
   }
 
-  const openView = (shortcut) => {
-    setShortcut(shortcut);
+  const handleShortcut = (key) => {
+    {
+      const next = shortcuts.getShortcut(key);
 
-    if (shortcut.mode == 'SideView') {
-      setSideViewOpen(true);
-    }
+      if (!next) return;
 
-    if (shortcut.mode == 'Modal') {
-      setModalOpen(true);
+      const isOpen = (next.mode == 'Modal' && modalOpen || next.mode == 'SideView' && sideViewOpen);
+
+
+      if (shortcut?.name == next.name && isOpen) {
+        console.log(`Shortcut "${shortcut?.name}" was already open, closing...`);
+
+        setSideViewOpen(false);
+        setModalOpen(false);
+        setShortcut(null);
+        return;
+      }
+
+      console.log(`Shortcut was "${shortcut?.name ?? "(empty)"}", going to "${next.name}"`);
+
+      setShortcut(next);
+
+      if (next.mode == 'SideView') setSideViewOpen(true);
+      if (next.mode == 'Modal') setModalOpen(true);
     }
   }
 
-  // Initial socket effects
+
+  // Initial effects
   useEffect(() => {
-    socket.on('connect', () => {
-      console.log(`connected to socket id ${socket.id}`)
-      socket.emit('game:start');
+    const cancelConnect = socket.onConnect(() => setIsConnected(true));
+
+    const cancelDisconnect = socket.onDisconnect(() => setIsConnected(false));
+
+    const cancelGameLoaded = socket.onGameLoaded(async ({ user, world }) => {
+      onLoaded().finally(() => {
+        setUser(user);
+        setWorld(world);
+        promptInputRef?.current?.focus();
+      });
     });
 
-    socket.on('disconnect', () => {
-      setIsConnected(false);
-    });
+    const cancelUsersUpdated = socket.onUsersUpdated(setUsers)
+    const cancelLocationChange = socket.onLocationChange(setLocation)
 
-    socket.on('game:loaded', async (data) => {
-      setIsConnected(true);
+    const cancelLoadingEffect = loadingEffect();
 
-      console.log(`Game loaded with data`, data)
 
-      const { user, world } = data;
-
-      setUser(user);
-      setWorld(world);
-
-      await onLoaded();
-    });
-
-    socket.on('ui:user_list', (users) => {
-      setUsers(users);
-    })
-
-    const interval = typingEffect();
 
     return () => {
-      socket.off('connect');
-      socket.off('disconnect');
-      socket.off('game:loaded');
-      socket.off('ui:user_list');
-      clearInterval(interval);
+      cancelConnect();
+      cancelDisconnect();
+      cancelGameLoaded();
+      cancelUsersUpdated();
+      cancelLoadingEffect();
+      cancelLocationChange();
     };
   }, [])
 
-  // Shortcut effects
   useEffect(() => {
-    window.addEventListener('keydown', handleShortcut)
+    if (!terminalRef.current) return;
+
+    let resizing = false;
+
+    const resizing$ = fromEvent(window, 'resize').pipe(
+      debounceTime(10),
+      map(() => ({ w: window.innerWidth, h: window.innerHeight })),
+      pairwise(),
+      map(([prev, curr]) => prev.w !== curr.w || prev.h !== curr.h),
+      debounceTime(100),
+    ).subscribe(val => {
+      console.log(`Detected window is ${val ? 'not ' : ''}resizing`);
+      resizing = val;
+    });
+
+    const resize$ = resizeObserver(terminalRef.current).pipe(
+      map(() => terminalRef.current?.scrollHeight),
+      skipWhile(() => resizing),
+      distinctUntilChanged(),
+      tap(y => console.log(`New scroll height: ${y}`)),
+      map(() => true)
+    ).subscribe(scrollToBottom);
 
     return () => {
-      window.removeEventListener('keydown', handleShortcut);
+      resizing$.unsubscribe();
+
+      resize$.unsubscribe();
     }
-  }, [sideViewOpen, modalOpen, shortcut])
+  }, [terminalRef.current])
+
+  // Shortcut Effects
+  useEffect(() => {
+    const cancelShortcuts = shortcuts.onShortcutChange(({ key }) => handleShortcut(key));
+
+    return () => {
+      cancelShortcuts();
+    }
+  }, [shortcut, modalOpen, sideViewOpen])
+
 
   // Game response effects
   useEffect(() => {
-    const sub$ = of(socket).pipe(
-      switchMap(socket => fromEvent(socket, 'game:response')),
-      switchMap(([data, callback]) => {
-        callback("ACK");
-
-        return of(data.worldAdd);
-      }),
-      bufferTime(500),
-      filter(e => e.length > 0),
-    ).subscribe((add) => {
+    const cancelGameEvent = socket.onGameEvent((add) => {
       console.log(`Buffer:`, add);
       let nextWorld = [...worldQueue, ...add];
 
       nextWorld = add.map((v, index) => {
         v.afterRender = () => {
           setWorldQueue(nextWorld.slice(index + 1));
-        }
+        };
         return v;
       });
 
       setWorldQueue(nextWorld);
       scrollToBottom();
-    });
+    })
 
     return () => {
-      sub$.unsubscribe();
+      cancelGameEvent();
     }
   }, [worldQueue]);
 
   useEffect(() => {
-    const errors$ = of(socket).pipe(
-      switchMap(socket => fromEvent(socket, 'game:error')),
-      switchMap(([data, callback]) => {
-        callback("ACK");
-
-        return of(data.error);
-      })
-    ).subscribe(({ message }) => {
+    const cancelGameError = socket.onGameError(({ message }) => {
       if (error?.timeout) clearTimeout(error?.timeout);
 
       const timeout = setTimeout(() => setError({ message: '', timeout: null }), 3000);
@@ -270,7 +259,7 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
     });
 
     return () => {
-      errors$.unsubscribe();
+      cancelGameError();
     }
   }, [error])
 
@@ -285,11 +274,7 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
     };
 
     scrollToBottom(false);
-
-
-    if (worldQueue.length == 0) {
-      promptInputRef?.current?.focus();
-    }
+    promptInputRef?.current?.focus();
 
     if (worldQueue.length == 0 || rendering) {
       return;
@@ -321,31 +306,46 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
     {/* <audio src={uiSound} ref={uiSoundRef}></audio> */}
     <div className="text-xl w-full h-full relative font-mono mx-auto">
       <div id="game" className='w-full h-100 flex flex-col min-h-full top-0 left-0 text-white bg-gray-900'>
-        <nav className='w-full h-10 flex border-b border-gray-50 items-center justify-around sticky top-0 z-50 bg-gray-900'>
-          <div className="text-center h-full mr-auto items-center justify-center ml-2 text-sm hidden md:flex">
-            Páscoa/23
+        <nav className='text-base  sticky top-0 z-50 bg-gray-900'>
+          <div className="w-full h-12 flex border-b border-gray-700 items-center justify-around">
+            <div className="text-center h-full mr-auto items-center justify-center ml-2 text hidden md:flex">
+              <img src={zrpSvg} className='h-full w-full p-3'></img>
+            </div>
+            <div className="flex h-full ml-auto">
+              <button onClick={() => handleShortcut('Z')} className='relative px-3 my-2 mx-2 flex text-center bg-black rounded-xl  items-center justify-center hover:bg-orange-400 hover:text-black'>
+                <div className='relative flex items-center justify-center'>
+                  <span className='z-10 relative'>ZRP</span>
+                  <span className="text-xs px-2 py-1 mx-2 hidden md:flex rounded-xl bg-black text-white tracking-tighter">Ctrl + Z</span>
+                  <span className={`absolute right-0 top-0 transform-gpu translate-x-0 h-3 translate-y-1 w-3 rounded-full ${isConnected ? 'bg-green-400' : 'bg-orange-400'}`}></span>
+                </div>
+              </button>
+
+              <button onClick={() => handleShortcut(',')} className='px-3 my-2 mx-2 flex text-center bg-black rounded-xl  items-center justify-center hover:bg-gray-300 hover:text-black'>
+                Configurações <span className="text-xs px-2 py-1 mx-2 hidden md:flex rounded-xl bg-black text-white tracking-tighter">Ctrl + ,</span>
+              </button>
+            </div>
           </div>
-          <div className="flex h-full ml-auto">
-            <button onClick={() => openView(Shortcuts['Z'])} className='relative px-3 h-full flex text-center border-l border-l-gray-50 items-center justify-center hover:bg-green-300 hover:text-black'>
-              <div className='relative flex items-center justify-center'>
-                <span className='z-10 relative'>ZRP</span>
-                <span className="text-xs px-2 py-1 mx-2 hidden md:flex rounded-xl bg-black text-white tracking-tighter">Ctrl + Z</span>
-                <span className={`absolute right-0 top-0 transform-gpu translate-x-0 h-3 translate-y-1 w-3 rounded-full ${isConnected ? 'bg-green-400' : 'bg-orange-400'}`}></span>
-              </div>
-            </button>
-            <button onClick={() => openView(Shortcuts['P'])} className='px-3 h-full flex text-center border-l border-l-gray-50 items-center justify-center hover:bg-orange-500 hover:text-black'>
-              Progresso <span className="text-xs px-2 py-1 mx-2 hidden md:flex rounded-xl bg-black text-white tracking-tighter">Ctrl + P</span>
-            </button>
-            <button onClick={() => openView(Shortcuts['M'])} className='px-3 h-full flex text-center border-l border-l-gray-50 items-center justify-center hover:bg-yellow-500 hover:text-black'>
-              Mapa <span className="text-xs px-2 py-1 mx-2 hidden md:flex rounded-xl bg-black text-white tracking-tighter">Ctrl + M</span>
-            </button>
-            <button onClick={() => openView(Shortcuts[','])} className='px-3 h-full flex text-center border-l border-l-gray-50 items-center justify-center hover:bg-purple-300 hover:text-black'>
-              Configurações <span className="text-xs px-2 py-1 mx-2 hidden md:flex rounded-xl bg-black text-white tracking-tighter">Ctrl + ,</span>
-            </button>
-          </div>
+
+
+          <nav className='w-full text-base h-8 flex border-b border-gray-700 items-center justify-between bg-gray-900'>
+            <span className='ml-4 text-base font-medium font-mono text-gray-400'>{location}</span>
+            <div className="flex h-full ml-auto">
+              <button onClick={() => handleShortcut('I')} className='px-3 h-full flex text-center border-l border-l-gray-700 items-center justify-center hover:bg-pink-400 hover:text-black'>
+                Inventário <span className="text-xs px-2 py-1 mx-2 hidden md:flex rounded-xl bg-black text-white tracking-tighter">Ctrl + I</span>
+              </button>
+              <button onClick={() => handleShortcut('P')} className='px-3 h-full flex text-center border-l border-l-gray-700 items-center justify-center hover:bg-yellow-400 hover:text-black'>
+                Progresso <span className="text-xs px-2 py-1 mx-2 hidden md:flex rounded-xl bg-black text-white tracking-tighter">Ctrl + P</span>
+              </button>
+              <button onClick={() => handleShortcut('M')} className='px-3 h-full flex text-center border-l border-l-gray-700 items-center justify-center hover:bg-blue-400 hover:text-black'>
+                Mapa <span className="text-xs px-2 py-1 mx-2 hidden md:flex rounded-xl bg-black text-white tracking-tighter">Ctrl + M</span>
+              </button>
+
+            </div>
+          </nav>
         </nav>
 
-        <div id="terminal" className='p-4 min-h-full flex-grow relative'>
+
+        <div id="terminal" ref={terminalRef} className='p-4 min-h-full flex-grow relative cursor-pointer' onClick={() => promptInputRef?.current?.focus()}>
           {world.map((prompt, index) => {
             if (!prompt) return;
 
@@ -360,22 +360,19 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
               afterRender={prompt?.afterRender}
             />
           })}
+          {!rendering ? <form onSubmit={handleSubmit} className='h-12 bg-gray-900 sticky bottom-0 z-50 left-0 w-full flex items-center justify-center'>
+            <span className="flex mr-4 h-full items-center ml-0"><b className="text-orange-400">&gt;</b></span>
+            <input ref={promptInputRef} type="text" name="prompt" value={prompt} onChange={handleChange} disabled={worldQueue.length > 0} className="w-full bg-transparent font-mono text-white outline-none" />
+            <button type="submit" className='sr-only'></button>
+          </form> : <></>}
         </div>
 
         {worldQueue.length > 0 && rendering ? <div ref={typingRef} className='text-xs ml-4 mb-2 bg-gray-900 text-gray-100 rounded-md w-24 text-left p-1 px-2 '>Digitando<span></span></div> : <></>}
 
-        <div className={`flex items-top transition-all fixed p-4 rounded-xl bg-red-500 w-2/5 top-16 right-4 ${error?.message == '' ? '-translate-y-40' : 'translate-y-0'}`}>
+        <div className={`z-50 flex items-top transition-all fixed p-4 rounded-xl bg-red-500 w-2/5 top-20 mt-2 right-4 ${error?.message == '' ? '-translate-y-40' : 'translate-y-0'}`}>
           <img src={alertSvg} className='w-6 h-6 mr-4' />
           <p className='text-sm'>{error?.message}</p>
         </div>
-
-        <form onSubmit={handleSubmit} className='h-16 backdrop-blur-lg bg-gray-900 border-t border-t-gray-100 sticky bottom-0 z-50 left-0 w-full flex align-items-center'>
-          <input ref={promptInputRef} type="text" name="prompt" value={prompt} onChange={handleChange} disabled={worldQueue.length > 0} className="w-full bg-transparent font-mono p-2 text-white outline-none" />
-          <button type="submit" className={`text-sm p-2 mx-4 ${prompt == '' ? 'opacity-50' : 'opacity-100'} transition-opacity`} disabled={prompt == ''}>
-            <img src={sendSvg} className="h-full cursor-pointer" />
-          </button>
-        </form>
-
 
         <Modal open={qModalOpen} title={'ZRP > Easter23 > Pergunta #1'} onClose={() => setQModalOpen(false)}>
           <div className="p-4 flex-grow">
@@ -405,7 +402,7 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
               <Modal open={modalOpen} onClose={() => setModalOpen(false)} {...shortcut.extraProps}>
                 {shortcut.render({ socket, user, users })}
               </Modal>
-              : <SideView open={sideViewOpen} onClose={() => setSideViewOpen(false)}>
+              : <SideView open={sideViewOpen} onClose={() => setSideViewOpen(false)} {...shortcut.extraProps}>
                 {shortcut.render({ socket, user, users })}
               </SideView>
           ) : <></>

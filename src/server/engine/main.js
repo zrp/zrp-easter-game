@@ -1,107 +1,78 @@
-const { createMachine, interpret, assign, raise } = require("xstate");
+const Engine = require("./engine");
 
 const { getUser } = require("../services/userService");
-const { getWorldState, getRenderer, getSave, saveGame, isCooldownActive, setCooldown } = require("../services/gameService");
-const l01 = require("./levels/l01");
+const { getWorldState, getRenderer, getSave, isCooldownActive, setCooldown } = require("../services/gameService");
 
 const { PLAYER } = require("./characters");
+const _ = require("lodash");
 
 const l = require("../logger");
+const { empty } = require("rxjs");
 
-const createEngine = async (io, sessionId, userId) => {
-  const { user, world, save } = await loadGame(io, sessionId, userId);
+const attachHandler = async (io, client, { id: userId }, sessionId) => {
+  l.debug(`Attaching listeners for game`);
 
-  const { add2world, setError } = getRenderer(io, sessionId, user);
+  const { user, world, savegame } = await loadGame(io, sessionId, userId);
 
-  const saver = (save) => saveGame(user, save);
+  const { add2world, setError, changeLocation } = getRenderer(io, sessionId, user);
 
-  const machine = createMachine(
-    {
-      predictableActionArguments: true,
-      preserveActionOrder: true,
-      id: "game",
-      state: save,
-      context: {
-        steps: 0,
-        name: user?.name?.givenName,
-      },
-      initial: "l01",
-      on: {
-        prompt: {
-          actions: (context, prompt) => {
-            console.log(`Running prompt`, prompt);
-          },
-        },
-      },
-      states: {
-        l01: {
-          ...l01(add2world, setError),
-        },
-      },
-    },
-    {
-      actions: {
-        countSteps: assign({ steps: (context) => context.steps + 1 }),
-      },
-    },
-  );
+  const engine = Engine.createEngine(user, savegame);
 
-  const onTransition = async (state) => {
-    // l.debug(`FSM transitioned to ${state.value} with context ${JSON.stringify(state.context, null, 2)}`);
-    // l.debug(JSON.stringify(state, null, 2));
-    await saver(state);
-  };
+  engine.onUpdate((message) => {
+    add2world(message, true);
+  });
 
-  const engine = interpret(machine).onTransition(onTransition);
+  engine.onLocationChange((location) => {
+    changeLocation(location);
+  });
 
-  engine.start(save?.value, save?.context);
+  // Attach handler
+  client.on("prompt", async ({ prompt }, cb) => {
+    l.debug(`Called prompt on server`);
 
-  if (world.length === 0) engine.send("startGame");
+    if (cb) cb("SYN_SERVER");
 
-  l.info(`⚡ Game started!`);
+    // Check for cooldown
+    const isCooldown = await isCooldownActive(user, "prompt");
 
-  return {
-    send: async (name, prompt) => {
-      const isCooldown = await isCooldownActive(user, "prompt");
+    if (isCooldown) {
+      l.debug(`Cooldown is active, action will be ignored`);
+      setError({ message: "Você não pode mandar tantas mensagens assim 👀" });
+      return;
+    }
 
-      if (isCooldown) {
-        setError({ message: "Você não pode mandar tantas mensagens assim 👀" });
-        return;
-      }
+    await setCooldown(user, "prompt", 1);
 
-      await setCooldown(user, "prompt");
+    l.debug(`Sending user his own message back`);
+    add2world({
+      interactive: false,
+      animate: false,
+      prompt,
+      who: PLAYER,
+    });
 
-      add2world({
-        interactive: false,
-        animate: false,
-        prompt,
-        who: PLAYER,
-      });
+    await engine.next(prompt);
+  });
 
-      // TODO: add here a parser before sending data to engine
+  engine.start(savegame);
 
-      engine.send(name, { prompt });
-    },
-    engine,
-  };
+  io.to(sessionId).emit("game:loaded", { user, world, savegame });
 };
 
 const loadGame = async (io, sessionId, userId) => {
   const user = await getUser(userId);
   const world = await getWorldState(user);
-  const save = await getSave(user);
+  const savegame = await getSave(user);
 
   l.debug(`Loaded user ${user.id} from storage`);
   l.debug(`Loaded world associated with ${user.id}, world length is ${world.length}`);
-  l.debug(`Loaded last save game associated with ${user.id}, save is ${JSON.stringify(save, null, 2)}`);
+  l.debug(`Loaded last savegame associated with ${user.id}, save is ${savegame ? "at " + JSON.stringify(savegame?.value) : "empty"}`);
 
-  io.to(sessionId).emit("game:loaded", { user, world });
-
-  return { user, world, save };
+  return { user, world, savegame };
 };
 
 module.exports = {
-  createEngine,
+  attachHandler,
   loadGame,
 };
 

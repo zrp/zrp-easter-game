@@ -28,10 +28,12 @@ async function getSave(user) {
   }
 }
 
-async function saveGame(user, save = {}) {
-  const data = JSON.stringify(save);
+function createSaver(user) {
+  return async (save) => {
+    const data = JSON.stringify(save);
 
-  await redisClient.set(`users:save:${user.id}`, data);
+    await redisClient.set(`users:save:${user.id}`, data);
+  };
 }
 
 async function isCooldownActive(user, action) {
@@ -71,6 +73,10 @@ function getRenderer(io, sessionId, user) {
   }
 
   return {
+    changeLocation: (location) => {
+      const queue = queues[user.id]?.response;
+      queue.push(async () => await renderer("game:location-change", location, false));
+    },
     add2world: (worldAdd, save = true) => {
       const queue = queues[user.id]?.response;
       queue.push(async () => await renderer("game:response", { worldAdd: { interactive: true, animate: true, who: Characters.NARRATOR, ...worldAdd } }, save));
@@ -85,7 +91,7 @@ function getRenderer(io, sessionId, user) {
 module.exports = {
   getWorldState,
   getSave,
-  saveGame,
+  createSaver,
   push,
   isCooldownActive,
   setCooldown,

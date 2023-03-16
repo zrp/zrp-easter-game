@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocalStorage } from "../hooks/storage";
 
-const TYPE_SPEED = 50;
+const TYPE_SPEED = 1;
 
 const getTextDynamicGroups = (text, onClick, interactive = false) => (text.match(/\$(.*?)\$/gmi) ?? []).map((word, index) => {
   try {
@@ -41,6 +41,7 @@ export default function TypedText(props = { text: "", animate: false, interactiv
   const [isAnimating, setIsAnimating] = useState(false);
   const [dense] = useLocalStorage('layout:dense', false);
   const [fontSizeSm] = useLocalStorage('layout:font-sm', false);
+  const [typeSpeed] = useLocalStorage('layout:typeSpeed', 50);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -55,12 +56,12 @@ export default function TypedText(props = { text: "", animate: false, interactiv
       letters?.forEach((letter, index) => {
         letter.style.display = 'none';
 
-        setTimeout(() => letter.style.display = 'inline', (index + 1) * TYPE_SPEED);
+        setTimeout(() => letter.style.display = 'inline', (index + 1) * typeSpeed);
       });
       setTimeout(() => {
         afterRender?.();
         setIsAnimating(false);
-      }, (letters.length + 1) * TYPE_SPEED)
+      }, (letters.length + 1) * typeSpeed)
     } else {
       letters.forEach(l => l.style.display = 'inline');
 
@@ -81,36 +82,45 @@ export default function TypedText(props = { text: "", animate: false, interactiv
     newText = newText.replace(group.word, group.token);
   }
 
+  const onWhoClick = who && who.showName ? (e) => {
+    e.preventDefaul();
+    if (who) whoIs?.(who?.id)
+  } : null;
+
   // Rewrite text into spans
-  newText = newText.split(' ').map((_text, index) => {
-    let text = _text;
+  newText = newText.split('\n').map((line, index) => {
+    return <div key={`line-${index}`} className="line w-full flex flex-wrap pb-2">
+      {line.split(' ').map((_text, index) => {
+        let text = _text;
 
-    // text that starts with $ is a token of a group, so we must used the rendered group
-    if (_text.startsWith('$')) {
-      const token = _text.match(/\$(\d*)/gmi)[0]
+        // text that starts with $ is a token of a group, so we must used the rendered group
+        if (_text.startsWith('$')) {
+          const token = _text.match(/\$(\d*)/gmi)[0]
 
-      const group = dynamicGroups.find(group => group.token == token);
+          const group = dynamicGroups.find(group => group.token == token);
 
-      text = text.replace(token, group?.rendered);
+          text = text.replace(token, group?.rendered);
 
-      // We replace the _text twice because some characters
-      // may appear after the token, like , and ?
-      return <span key={index} className="mr-2 word flex flex-wrap">
-        {group.rendered}
-        {_text.replace(token, '').split('').map(LetterToElement)}
-      </span>;
-    } else {
-      // else if text does not start with $ it's just a common word,
-      // so we just split each letter into spans
-      return <span key={index} className="mr-2 word flex flex-wrap">
-        {text.split('').map(LetterToElement)}
-      </span>;
-    }
+          // We replace the _text twice because some characters
+          // may appear after the token, like , and ?
+          return <span key={index} className="mr-2 word flex flex-wrap">
+            {group.rendered}
+            {_text.replace(token, '').split('').map(LetterToElement)}
+          </span>;
+        } else {
+          // else if text does not start with $ it's just a common word,
+          // so we just split each letter into spans
+          return <span key={index} className="mr-2 word flex flex-wrap">
+            {text.split('').map(LetterToElement)}
+          </span>;
+        }
+      })}
+    </div>;
   });
 
   return <div className={`flex ${fontSizeSm ? 'text-base' : ''} ${dense ? 'p-0 mb-4' : 'p-3 mb-6 bg-black bg-opacity-20 rounded-xl'}`}>
-    <span onClick={() => { who && whoIs?.(who?.id) }} className={`mr-4 h-full ${who ? 'cursor-pointer' : ''}`}>
-      <b className={who?.color}>{who?.name ? who.name + ":" : ">"}</b>
+    <span onClick={onWhoClick} className={`mr-4 h-full ${who ? 'cursor-pointer' : ''}`}>
+      <b className={who?.color}>{who && who.showName ? who.name + ":" : ">"}</b>
     </span>
     <div className={`flex flex-wrap opacity-0 flex-grow`} ref={ref}>{newText}</div>
   </div>
