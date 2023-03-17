@@ -1,143 +1,205 @@
-// add2world({
-//   prompt: `Olá, me chamo ${character2front(Characters.BUN)}`,
-//   who: Characters.BUN,
-// });
-
-// add2world({
-//   prompt: `${day} eu estava em uma pequena cidade ao leste de $[Mui](ui:tip,city-mui)$, de onde sou, quando um monstro roubou minha $[cesta de ovos](ui:tip,egg-basket)$, e nem tive tempo de ir atrás dele. A última coisa que me lembro é de vê-lo indo em $[direção ao norte](ui:tip,directions-north)$. Será que você consegue me ajudar?`,
-//   who: Characters.BUN,
-// });
-
-const moment = require("moment");
-
-const { BUN, PLAYER } = require("../characters");
-const { createModel, txt2front, txt2input, txt2output } = require("./");
+const { BUN } = require("../characters");
+const { createModel } = require("./");
 
 module.exports = createModel(
-  BUN.id,
+  BUN,
   // Utterances / Data
   (manager) => {
-    manager.addDocument("pt", "de que cidade você é?", "aboutMui");
-    manager.addDocument("pt", "conte mais da sua cidade?", "aboutMui");
-    manager.addDocument("pt", "aonde fica mui?", "aboutMui");
-    manager.addDocument("pt", "cidade de mui", "aboutMui");
-    manager.addDocument("pt", "de que cidade você é?", "aboutMui");
-    manager.addDocument("pt", "cesta de ovos", "action.basketOfEggs");
-    manager.addDocument("pt", "o que é a cesta de ovos", "action.basketOfEggs");
-    manager.addDocument("pt", "aonde estão seus ovos", "action.basketOfEggs");
-    manager.addDocument("pt", "qual o nome da criatura?", "action.monsterName");
-    manager.addDocument("pt", "qual o nome do monstro?", "action.monsterName");
-    manager.addDocument("pt", "quem é o monstro?", "action.monsterName");
-    manager.addDocument("pt", "você sabe quem é?", "action.monsterName");
-    manager.addDocument("pt", "você viu o monstro?", "action.monsterFace");
-    manager.addDocument("pt", "como o monstro é?", "action.monsterFace");
-    manager.addDocument("pt", "e como era seu rosto?", "action.monsterFace");
-    manager.addDocument("pt", "e como ele era?", "action.monsterFace");
-    manager.addDocument("pt", "o que eu faço", "ask4help");
-    manager.addDocument("pt", "me ajuda", "ask4help");
-    manager.addDocument("pt", "oi", "action.hello");
-    manager.addDocument("pt", "olá", "action.hello");
-    manager.addDocument("pt", "alô", "action.hello");
-    manager.addDocument("pt", "fala", "action.hello");
-    manager.addDocument("pt", "e aí?", "action.hello");
-    manager.addDocument("pt", "coé", "action.hello");
-    manager.addDocument("pt", "opa", "action.hello");
-    manager.addDocument("pt", "bom dia", "action.hello");
-    manager.addDocument("pt", "boa tarde", "action.hello");
-    manager.addDocument("pt", "boa noite", "action.hello");
-    manager.addDocument("pt", "não", "action.nope");
-    manager.addDocument("pt", "jamais", "action.nope");
-    manager.addDocument("pt", "nope", "action.nope");
-    manager.addDocument("pt", "no", "action.nope");
-    manager.addDocument("pt", "rabo", "action.tail");
-    manager.addDocument("pt", "que rabo?", "action.tail");
-    manager.addDocument("pt", "como era o rabo?", "action.tail");
-    manager.addDocument("pt", "vai se fuder", "action.curse");
-    manager.addDocument("pt", "vá se fuder", "action.curse");
-    manager.addDocument("pt", "vsf", "action.curse");
-    manager.addDocument("pt", "otário", "action.curse");
-    manager.addDocument("pt", "pau no cu", "action.curse");
-    manager.addDocument("pt", "pnc", "action.curse");
-    manager.addDocument("pt", "vtnc", "action.curse");
-    manager.addDocument("pt", "vai toma no cu", "action.curse");
-    manager.addDocument("pt", "arrombado", "action.curse");
-    manager.addDocument("pt", "filho da puta", "action.curse");
-    manager.addDocument("pt", "caralho", "action.complaining");
-    manager.addDocument("pt", "foda", "action.complaining");
-    manager.addDocument("pt", "porra", "action.complaining");
+    manager.addNamedEntityText("city", "nodeville", ["pt"], ["nodeville", "node ville"]);
+    manager.addNamedEntityText("kingdom", "w'eb", ["pt"], ["W'eb", "web", "dimensão", "reino"]);
+
+    // Where are you from
+    manager.addDocument("pt", "de que cidade você é?", "whereAreYouFrom");
+    manager.addDocument("pt", "de onde você é?", "whereAreYouFrom");
+    manager.addDocument("pt", "voltar para casa?", "whereAreYouFrom");
+    manager.addDocument("pt", "cidade de nodeville", "whereAreYouFrom");
+    manager.addDocument("pt", "dimensão", "whereAreYouFrom");
+
+    // Where are we
+    manager.addDocument("pt", "aonde estamos?", "whereAreWe");
+
+    // more about
+    manager.addDocument("pt", "conte mais sobre o %kingdom%", "moreAboutKingdom");
+    manager.addDocument("pt", "aonde fica o %kingdom%?", "moreAboutKingdom");
+
+    // Cesta de ovos
+    manager.addDocument("pt", "cesta de ovos", "basketOfEggs");
+    manager.addDocument("pt", "o que é a cesta de ovos", "basketOfEggs");
+    manager.addDocument("pt", "aonde estão seus ovos", "basketOfEggs");
+
+    // easter
+    manager.addDocument("pt", "páscoa", "easter");
+    manager.addDocument("pt", "preparativos para a páscoa", "easter");
+    manager.addDocument("pt", "preparando para a páscoa", "easter");
+
+    // monsterName
+    manager.addDocument("pt", "qual o nome do ladrão?", "monsterName");
+    manager.addDocument("pt", "quem te roubou?", "monsterName");
+    manager.addDocument("pt", "quem é o ladrão?", "monsterName");
+    manager.addDocument("pt", "você sabe quem é o ladrão?", "monsterName");
+
+    // monsterFace
+    manager.addDocument("pt", "você viu o ladrão?", "monsterFace");
+    manager.addDocument("pt", "como o ladrão é?", "monsterFace");
+    manager.addDocument("pt", "e como era seu rosto?", "monsterFace");
+    manager.addDocument("pt", "e como ele era?", "monsterFace");
+
+    // oi
+    manager.addDocument("pt", "oi", "hello");
+    manager.addDocument("pt", "olá", "hello");
+    manager.addDocument("pt", "alô", "hello");
+    manager.addDocument("pt", "fala", "hello");
+    manager.addDocument("pt", "e aí?", "hello");
+    manager.addDocument("pt", "coé", "hello");
+    manager.addDocument("pt", "opa", "hello");
+    manager.addDocument("pt", "bom dia", "hello");
+    manager.addDocument("pt", "boa tarde", "hello");
+    manager.addDocument("pt", "boa noite", "hello");
+
+    // não
+    manager.addDocument("pt", "não", "refuse");
+    manager.addDocument("pt", "jamais", "refuse");
+    manager.addDocument("pt", "nope", "refuse");
+    manager.addDocument("pt", "no", "refuse");
+
+    // tail
+    manager.addDocument("pt", "rabo", "aboutTail");
+    manager.addDocument("pt", "que rabo?", "aboutTail");
+    manager.addDocument("pt", "como era o rabo?", "aboutTail");
+
+    // curse
+    manager.addDocument("pt", "vai se fuder", "curse");
+    manager.addDocument("pt", "vá se fuder", "curse");
+    manager.addDocument("pt", "vsf", "curse");
+    manager.addDocument("pt", "otário", "curse");
+    manager.addDocument("pt", "pau no cu", "curse");
+    manager.addDocument("pt", "pnc", "curse");
+    manager.addDocument("pt", "vtnc", "curse");
+    manager.addDocument("pt", "vai toma no cu", "curse");
+    manager.addDocument("pt", "arrombado", "curse");
+    manager.addDocument("pt", "filho da puta", "curse");
+
+    // complaining
+    manager.addDocument("pt", "caralho", "complaining");
+    manager.addDocument("pt", "foda", "complaining");
+    manager.addDocument("pt", "porra", "complaining");
+
+    // accept mission
     manager.addDocument("pt", "claro", "acceptMission");
     manager.addDocument("pt", "é pra já", "acceptMission");
     manager.addDocument("pt", "sim", "acceptMission");
     manager.addDocument("pt", "bora", "acceptMission");
-    manager.addDocument("pt", "desculpa", "action.apologize");
-    manager.addDocument("pt", "foi mal", "action.apologize");
-    manager.addDocument("pt", "era brincadeira", "action.apologize");
-    manager.addDocument("pt", "foi sem querer", "action.apologize");
-    manager.addDocument("pt", "oi, tudo bom?", "howAreYou");
-    manager.addDocument("pt", "tudo bem?", "howAreYou");
-    manager.addDocument("pt", "prazer em te conhecer", "action.niceToMeetYou");
-    manager.addDocument("pt", "foi um prazer te conhecer", "action.niceToMeetYou");
-    manager.addDocument("pt", "feliz em te conhecer", "action.niceToMeetYou");
-    manager.addDocument("pt", "bom te conhecer", "action.niceToMeetYou");
-    manager.addDocument("pt", "legal te conhecer", "action.niceToMeetYou");
-    manager.addDocument("pt", "tchau", "action.bye");
-    manager.addDocument("pt", "vlw, flw", "action.bye");
-    manager.addDocument("pt", "falou", "action.bye");
-    manager.addDocument("pt", "até mais", "action.bye");
-    manager.addDocument("pt", "até já", "action.bye");
-    manager.addDocument("pt", "abraço", "action.bye");
-    manager.addDocument("pt", "aonde estamos?", "whereAreWe");
+    manager.addDocument("pt", "posso", "acceptMission");
+
+    // apologize
+    manager.addDocument("pt", "desculpa", "apologize");
+    manager.addDocument("pt", "foi mal", "apologize");
+    manager.addDocument("pt", "era brincadeira", "apologize");
+    manager.addDocument("pt", "foi sem querer", "apologize");
+
+    manager.addDocument("pt", "oi, tudo bom?", "hello");
+    manager.addDocument("pt", "tudo bem?", "hello");
+
+    // how the machine work
+    manager.addDocument("pt", "como a máquina funciona?", "aboutMachine");
+    manager.addDocument("pt", "o que é a máquina?", "aboutMachine");
+    manager.addDocument("pt", "que máquina?", "aboutMachine");
+    manager.addDocument("pt", "o que é a máquina no canto?", "aboutMachine");
+    manager.addDocument("pt", "o que é a máquina ao leste?", "aboutMachine");
+    manager.addDocument("pt", "o que é a máquina na direita?", "aboutMachine");
+
+    manager.addDocument("pt", "como usar a máquina?", "aboutMachine");
+
+    // password
+    manager.addDocument("pt", "qual a senha?", "aboutPassword");
+    manager.addDocument("pt", "qual a senha de ativação?", "aboutPassword");
+    manager.addDocument("pt", "qual a senha da máquina?", "aboutPassword");
+    manager.addDocument("pt", "senha da máquina", "aboutPassword");
+
+    manager.addDocument("pt", "prazer em te conhecer", "niceToMeetYou");
+    manager.addDocument("pt", "foi um prazer te conhecer", "niceToMeetYou");
+    manager.addDocument("pt", "feliz em te conhecer", "niceToMeetYou");
+    manager.addDocument("pt", "bom te conhecer", "niceToMeetYou");
+    manager.addDocument("pt", "legal te conhecer", "niceToMeetYou");
+
+    manager.addDocument("pt", "tchau", "exitConversation");
+    manager.addDocument("pt", "vlw, flw", "exitConversation");
+    manager.addDocument("pt", "falou", "exitConversation");
+    manager.addDocument("pt", "até mais", "exitConversation");
+    manager.addDocument("pt", "até já", "exitConversation");
+    manager.addDocument("pt", "abraço", "exitConversation");
+
+    manager.addDocument("pt", "me ajude a ir", "goToKingdom");
+    manager.addDocument("pt", "me ajude", "goToKingdom");
+    manager.addDocument("pt", "me ajude a ir para sua dimensão", "goToKingdom");
+    manager.addDocument("pt", "me ajude a ir para %kingdom%", "goToKingdom");
+    manager.addDocument("pt", "ir para %kingdom%", "goToKingdom");
+    manager.addDocument("pt", "como ir para %kingdom%", "goToKingdom");
+
+    manager.addDocument("pt", "com o que?", "withWhat");
+    manager.addDocument("pt", "sobre o que?", "withWhat");
 
     manager.addAnswer(
       "pt",
-      "ask4help",
-      `Você sempre pode me pedir ajuda. Para falar comigo, digite abaixo. Eu sou bem esperto, se eu souber te responder, responderei com prazer. Tente dizer, por exemplo, "o que é a cidade de Mui?".`,
+      "easter",
+      "Eu venho para esse laboratório em março e abril com minha cesta de ovos, mas desde que fui roubado, fiquei desolado e não consegui nem pensar em voltar para casa. Preciso resolver esse problema e recuperar minha cesta de ovos. Será que você me ajudaria?",
     );
-    manager.addAnswer("pt", "action.hello", `Olá, ${txt2output("name")}, você poderia me ajudar?!`);
-    manager.addAnswer("pt", "acceptMission", "Aaaah, muito obrigado! Se quiser eu posso te falar sobre como era o monstro, ou sobre a cidade da qual eu sou.");
-    manager.addAnswer("pt", "howAreYou", `Bem não estou, claramente! 😠`);
+
+    manager.addAnswer(
+      "pt",
+      "moreAboutKingdom",
+      "O reino W'eb fica numa dimensão separada da sua, eu posso te teleportar para lá, mas os riscos são grandes. Humanos não aguentam viver naquelas condições por muito tempo, então você precisará voltar antes do seu tempo acabar.",
+    );
+
+    manager.addAnswer(
+      "pt",
+      "helpRequested",
+      `Você sempre pode me pedir ajuda. Para falar comigo, digite abaixo. Eu sou bem esperto, se eu souber te responder, responderei com prazer. Tente dizer, por exemplo, "o que é a cidade de Nodeville?".`,
+    );
+
     manager.addAnswer(
       "pt",
       "whereAreWe",
-      "Agora estamos no meio da estrada norte-sul. Ao norte fica a floresta branca, uma floresta relativamente calma e sem perigos conhecidos. Ao sul fica a entrada para o pântano de Java, saindo do pântano de Java, continuando para o leste, você chegará em Mui.",
+      "Agora estamos no meio do meu laboratório secreto. Como você sabe, eu não sou desse mundo, mas do reino W'eb. Eu utilizo este laboratório apenas nos meses de março e abril para distribuir ovos para as crianças, mas minha cesta foi roubada, então vim para cá atrás de alguém que possa me ajudar. Você pode?",
     );
+
     manager.addAnswer(
       "pt",
-      "aboutMui",
-      "A cidade de Mui é uma cidade relativamente nova, e é onde eu moro atualmente. Ela é extremamente bem estruturada, e de fácil acesso. Talvez você deva passar por ela, ela fica indo em direção ao sul, após sair do pântano de Java.",
+      "whereAreYouFrom",
+      "Eu vim da cidade de Nodeville, que é parte do reino W'eb, e é para lá que o ladrão voltou.\nSe você quiser eu posso te ajudar a chegar na minha dimensão. Só precisamos usar a máquina à sua direita.",
     );
+
     manager.addAnswer(
       "pt",
-      "action.basketOfEggs",
-      `Aaaah, minha cesta de ovos. Eu iria distribuí-los até a páscoa, mas ${
-        moment().isBefore(moment("2023-04-09"))
-          ? "ainda há tempo. Se você encontrá-la, talvez eu possa te recompensar com um desses ovos."
-          : "não há mais tempo!"
-      }`,
+      "basketOfEggs",
+      `Aaaah, minha cesta de ovos :(\nEu iria distribuí-los até a páscoa, mas aquele ladrão roubou eles de mim.\nMas eu acredito que ainda há tempo. Se você encontrar minha cesta talvez eu possa te recompensar com um desses ovos.`,
     );
+
     manager.addAnswer(
       "pt",
-      "action.monsterName",
-      "Seu nome? Desconhecido. Relatos vieram de todas as direções, guerreiros bravos da guilda $[Vercelida](ui:tip,guilds)$ e da $[Red Ruby](ui:tip,guilds)$ foram vistos lutando contra a besta, sabendo de seu imenso poder.",
+      "aboutMachine",
+      `A máquina é um teletransportador interdimensional quantizado. Ele pode te levar para W'eb, mas para usar a máquina você precisa ligá-la e digitar a senha de ativação.`,
     );
+
+    manager.addAnswer("pt", "aboutPassword", `Eu sempre me esqueço dessa maldita senha. Talvez você encontre a senha na minha mesa.`);
+    manager.addAnswer("pt", "monsterName", "Eu não sei quem ele era.");
     manager.addAnswer(
       "pt",
-      "action.monsterFace",
-      "Eu não vi o seu rosto, ele parecia grande e feio, talvez um herói de outrora. Nunca se sabe os inimigos que encontraremos, não é mesmo? A única coisa que me lembro, antes de desmaiar, foi de ver seu rabo longo balançando.",
+      "monsterFace",
+      "Eu não vi o seu rosto, mas ele era grande e usava uma capa preta. A única coisa que me lembro foi de ver seu rabo longo desaparecendo pelo portal.",
     );
-    manager.addAnswer(
-      "pt",
-      "action.complaining",
-      `${txt2front(
-        txt2output("name"),
-        "ui:who_is",
-        PLAYER.id,
-      )}, não se irrite! Eu posso te ajudar. Tente me perguntar, por exemplo, "o que é a cidade de Mui?"`,
-    );
-    manager.addAnswer("pt", "action.tail", `Sim, um rabo longo, com longos fios na ponta, mas como te disse, não vi muita coisa, posso estar enganado.`);
-    manager.addAnswer("pt", "action.niceToMeetYou", `O prazer de te conhecer é meu, {{name}}! Algo em que possa ajudá-lo?`);
-    manager.addAnswer("pt", "action.nope", "Aaaah, tudo bem, outros provavelmente terão interesse em me ajudar.");
-    manager.addAnswer("pt", "action.curse", "Vá @* !%#@*! E não fale mais comigo!! 🤬");
-    manager.addAnswer("pt", "action.bye", "Até logo");
+    manager.addAnswer("pt", "complaining", `Não se irrite! Eu posso te ajudar. O que você quer saber?`);
+
+    manager.addAnswer("pt", "aboutTail", `Era um rabo longo com fios pretos na ponta, mas como te disse, não vi muita coisa, posso estar enganado.`);
+
+    manager.addAnswer("pt", "niceToMeetYou", `O prazer é meu! É sempre bom conhecer pessoas dispostas a me ajudarem! Algo mais em que eu possa ajudá-lo?`);
+
+    manager.addAnswer("pt", "refuse", "Aaaah, tudo bem, outros provavelmente terão interesse em me ajudar.");
+    manager.addAnswer("pt", "curse", "Você me xingar não vai te ajudar em nada.");
+    manager.addAnswer("pt", "exitConversation", "Até logo! E boa sorte.");
+
+    manager.addAnswer("pt", "apologize", "Tudo bem, está perdoado.");
+    manager.addAnswer("pt", "apologize", "Não tem problema.");
+    manager.addAnswer("pt", "apologize", "Ok, mas espero que não se repita, tá bom?");
   },
 );

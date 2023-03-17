@@ -40,7 +40,7 @@ module.exports = async (io, client, { id: userId }, sessionId) => {
 
     switch (data?.name) {
       case "directions-north":
-        prompt = `Você pode se movimentar nas 4 direções cardinais (norte, sul, leste, oeste). Para você saber aonde você se encontra, você pode consultar o mapa clicando no menu superior, ou digitando Ctrl + M.`;
+        prompt = `Você pode se movimentar em 8 direções (norte, sul, leste, oeste, nordeste, noroeste, sudeste, sudoeste). Para você saber aonde você se encontra, você pode consultar o mapa clicando no menu superior, ou digitando Ctrl + M, ou perguntando "aonde estou?"`;
         break;
       default:
         prompt = `${data?.name} não está registrado`;

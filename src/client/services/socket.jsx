@@ -61,11 +61,9 @@ const onGameEvent = (cb = null) => {
 
         return of(data.worldAdd);
       }),
-      bufferTime(500),
-      filter((e) => e.length > 0),
     )
     .subscribe(async (add) => {
-      await cb?.(add);
+      await cb?.([add]);
     });
 
   return () => {

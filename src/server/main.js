@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const ViteExpress = require("vite-express");
 const { createServer } = require("http");
+const { inspect } = require("@xstate/inspect");
 
 // Local imports
 const { createExpressServer } = require("./server");

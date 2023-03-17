@@ -54,7 +54,8 @@ const character2front = (character) => {
  * @param {*} dataset
  * @returns
  */
-function createModel(model, addTrainingData = (manager) => {}) {
+function createModel(char, addTrainingData = (manager) => {}) {
+  const model = char.id;
   const filepath = path.join(__dirname, `${model}.nlp`);
 
   const manager = new NlpManager({
@@ -67,6 +68,7 @@ function createModel(model, addTrainingData = (manager) => {}) {
 
   return {
     manager,
+    char,
     say: (query = "", conversationContext = {}) => createSayFunction(manager, conversationContext)(query),
     train: async ({ force } = { force: false }) => {
       // Load data if exists or train (or force train)

@@ -82,9 +82,9 @@ export default function TypedText(props = { text: "", animate: false, interactiv
     newText = newText.replace(group.word, group.token);
   }
 
-  const onWhoClick = who && who.showName ? (e) => {
-    e.preventDefaul();
-    if (who) whoIs?.(who?.id)
+  const onWhoClick = who.id ? (e) => {
+    e.preventDefault();
+    if (who) whoIs?.(who.id)
   } : null;
 
   // Rewrite text into spans

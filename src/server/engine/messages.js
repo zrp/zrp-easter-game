@@ -27,7 +27,7 @@ const Messages = {
   },
   westOfHouse: {
     entry: {
-      prompt: `Oeste da casa\nVocê está parado em um campo aberto a oeste de uma casa branca, com uma porta da frente fechada.\nHá uma pequena caixa de correio aqui.`,
+      prompt: `Oeste da casa\nVocê está parado em um campo aberto a oeste de uma casa branca, com a porta da frente fechada.\nHá uma pequena caixa de correio aqui.`,
       who: Characters.NARRATOR,
     },
     mailboxOpen: {
@@ -55,7 +55,7 @@ const Messages = {
   eastOfHouse: {},
   eastFlorest: {
     entry: {
-      prompt: `Floresta à Leste\nVocê está numa clareira. Você vê uma luz forte vindo do leste.`,
+      prompt: `Floresta à Leste\nVocê está numa pequena estrada de terra. Você vê uma luz forte vindo do leste.`,
       who: Characters.NARRATOR,
     },
   },

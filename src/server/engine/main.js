@@ -16,7 +16,7 @@ const attachHandler = async (io, client, { id: userId }, sessionId) => {
 
   const { add2world, setError, changeLocation } = getRenderer(io, sessionId, user);
 
-  const engine = Engine.createEngine(user, savegame);
+  const engine = Engine.createEngine(user);
 
   engine.onUpdate((message) => {
     add2world(message, true);

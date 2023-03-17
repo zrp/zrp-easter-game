@@ -22,7 +22,7 @@ const Characters = {
     fullName: "Bun, o Coelho",
     color: "text-gray-400",
     description:
-      "Bun, o Coelho, é conhecido dos moradores da cidade de Mui, e era antigo residente das florestas brancas de Nodeville. Ele é seguidor leal da guilda Vercelida. Ele te contou uma história sobre como forças malignas roubaram seus ovos.",
+      "Bun, o Coelho, é conhecido dos moradores da cidade de Nodeville, do reino de W'eb. Ele é seguidor leal da guilda Vercelida. Ele te contou sobre seus ovos terem sido roubados em seu laboratório por uma figura misteriosa.",
   },
   ELEPHPANT: {
     id: "03-elephpant",
