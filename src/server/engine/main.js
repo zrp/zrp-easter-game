@@ -4,15 +4,13 @@ const { getUser } = require("../services/userService");
 const { getWorldState, getRenderer, getSave, isCooldownActive, setCooldown } = require("../services/gameService");
 
 const { PLAYER } = require("./characters");
-const _ = require("lodash");
 
 const l = require("../logger");
-const { empty } = require("rxjs");
 
 const attachHandler = async (io, client, { id: userId }, sessionId) => {
   l.debug(`Attaching listeners for game`);
 
-  const { user, world, savegame } = await loadGame(io, sessionId, userId);
+  const { user, world, savegame } = await loadGame(userId);
 
   const { add2world, setError, changeLocation } = getRenderer(io, sessionId, user);
 
@@ -24,6 +22,26 @@ const attachHandler = async (io, client, { id: userId }, sessionId) => {
 
   engine.onLocationChange((location) => {
     changeLocation(location);
+  });
+
+  client.on("game:update-inventory", async (cb) => {
+    if (cb) cb("SYN_SERVER");
+
+    const fsm = engine._fsm;
+
+    const { inventory } = fsm?.state?.context ?? {};
+
+    io.to(sessionId).emit("game:inventory-change", inventory ?? []);
+  });
+
+  client.on("game:update-progress", async (cb) => {
+    if (cb) cb("SYN_SERVER");
+
+    const fsm = engine._fsm;
+
+    const { steps, score } = fsm?.state?.context ?? { steps: 0, score: 0 };
+
+    io.to(sessionId).emit("game:progress-change", { steps, score });
   });
 
   // Attach handler
@@ -56,12 +74,13 @@ const attachHandler = async (io, client, { id: userId }, sessionId) => {
 
   engine.start(savegame);
 
-  io.to(sessionId).emit("game:loaded", { user, world, savegame });
+  io.to(sessionId).emit("game:loaded", { user, world });
 };
 
-const loadGame = async (io, sessionId, userId) => {
+const loadGame = async (userId) => {
   const user = await getUser(userId);
-  const world = await getWorldState(user);
+  const w = await getWorldState(user);
+  const world = w.splice(Math.max(0, w.length - 100), 100);
   const savegame = await getSave(user);
 
   l.debug(`Loaded user ${user.id} from storage`);
@@ -75,5 +94,3 @@ module.exports = {
   attachHandler,
   loadGame,
 };
-
-//  você decide parar seu caminhar e falar com uma estranha criatura de pelos brancos. As lágrimas escorrendo por entre seus olhos, e fios pretos presos a seu corpo, mas claramente de outro ser.

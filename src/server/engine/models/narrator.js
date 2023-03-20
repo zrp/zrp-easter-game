@@ -14,6 +14,8 @@ module.exports = createModel(NARRATOR, (manager) => {
   manager.addNamedEntityText("direction", "northeast", ["pt"], ["nordeste"]);
   manager.addNamedEntityText("direction", "southwest", ["pt"], ["sudoeste"]);
   manager.addNamedEntityText("direction", "southeast", ["pt"], ["sudeste"]);
+  manager.addNamedEntityText("direction", "up", ["pt"], ["cima"]);
+  manager.addNamedEntityText("direction", "down", ["pt"], ["baixo"]);
 
   // Answers for riddles
   manager.addNamedEntityText("answer", "rails", ["pt"], ["rails", "ruby on rails"]);
@@ -21,7 +23,7 @@ module.exports = createModel(NARRATOR, (manager) => {
   manager.addNamedEntityText("answer", "ada", ["pt"], ["ada lovelace", "lovelace"]);
 
   // npcs
-  manager.addNamedEntityText("npc", Characters.BUN.id, ["pt"], ["coelho", "bun", "coelho branco", Characters.BUN.fullName, Characters.BUN.name]);
+  manager.addNamedEntityText("npc", Characters.BUN.id, ["pt"], ["coelho", "coelho branco"]);
 
   // Locations
   manager.addNamedEntityText("location", "house", ["pt"], ["casa", "casa branca"]);
@@ -32,14 +34,42 @@ module.exports = createModel(NARRATOR, (manager) => {
   manager.addNamedEntityText("item", "table", ["pt"], ["mesa", "escrivaninha"]);
   manager.addNamedEntityText("item", "mailbox", ["pt"], ["caixa de correio", "correio"]);
   manager.addNamedEntityText("item", "machine", ["pt"], ["máquina", "teletransportador"]);
-  manager.addNamedEntityText("lock", "window", ["pt"], ["janela", "janela entreaberta"]);
-  manager.addNamedEntityText("lock", "door", ["pt"], ["porta"]);
+  manager.addNamedEntityText("item", "window", ["pt"], ["janela", "janela entreaberta"]);
+  manager.addNamedEntityText("item", "door", ["pt"], ["porta"]);
+  manager.addNamedEntityText("item", "key", ["pt"], ["chave do bun", "chave"]);
+  manager.addNamedEntityText("item", "ruby", ["pt"], ["rubi", "pedra", "gema"]);
+  manager.addNamedEntityText("item", "trapdoor", ["pt"], ["alçapão"]);
+
+  // l04
+  manager.addNamedEntityText("item", "board", ["pt"], ["lousa", "lousa imensa"]);
+  manager.addNamedEntityText("item", "rug", ["pt"], ["tapete"]);
+  manager.addNamedEntityText("item", "switch", ["pt"], ["interruptor", "alavanca"]);
+  manager.addNamedEntityText("item", "crowbar", ["pt"], ["pé de cabra", "pé-de-cabra", "crowbar"]);
+  manager.addNamedEntityText("item", "coil", ["pt"], ["bobina", "bobina de cristal"]);
 
   // Go direction
   manager.addDocument("pt", "ir para %direction%", "goDirection");
   manager.addDocument("pt", "ir pro %direction%", "goDirection");
   manager.addDocument("pt", "vai pro %direction%", "goDirection");
   manager.addDocument("pt", "%direction%", "goDirection");
+
+  // Go down or go up
+  manager.addDocument("pt", "descer o alçapão", "goDown");
+  manager.addDocument("pt", "descer as escadas", "goDown");
+  manager.addDocument("pt", "subir o alçapão", "goUp");
+  manager.addDocument("pt", "subir as escadas", "goUp");
+
+  // Help
+  manager.addDocument("pt", "ajuda", "help");
+  manager.addDocument("pt", "me ajuda", "help");
+  manager.addDocument("pt", "socorro", "help");
+  manager.addDocument("pt", "sos", "help");
+
+  // Push or Pull
+  manager.addDocument("pt", "puxar o %item%", "pull");
+  manager.addDocument("pt", "tirar o %item%", "pull");
+  manager.addDocument("pt", "empurrar o %item%", "push");
+  manager.addDocument("pt", "afastar o %item%", "push");
 
   // Turn on
   manager.addDocument("pt", "ligar a %item%", "turnOn");
@@ -96,10 +126,24 @@ module.exports = createModel(NARRATOR, (manager) => {
   manager.addDocument("pt", "abrir o %item%", "openItem");
   manager.addDocument("pt", "abrir a %item%", "openItem");
 
+  // Detach item
+  manager.addDocument("pt", "remover o %item_1% da %item_2%", "detachItem");
+  manager.addDocument("pt", "destacar o %item_1% da %item_2%", "detachItem");
+  manager.addDocument("pt", "separar o %item_1% da %item_2%", "detachItem");
+  manager.addDocument("pt", "retirar o %item_1% da %item_2%", "detachItem");
+  manager.addDocument("pt", "tirar o %item_1% da %item_2%", "detachItem");
+
+  manager.slotManager.addSlot("detachItem", "item_1", true, { pt: "De onde retirar o {{ item_1 }}?" });
+  manager.slotManager.addSlot("detachItem", "item_2", true, { pt: "Separar o {{ item_1 }} do que?" });
+
   // Grab item
   manager.addDocument("pt", "pegar a %item%", "grabItem");
   manager.addDocument("pt", "segurar a %item%", "grabItem");
   manager.addDocument("pt", "roubar o %item%", "grabItem");
+
+  // Fix item
+  manager.addDocument("pt", "consertar o %item%", "fixItem");
+  manager.addDocument("pt", "consertar a %item%", "fixItem");
 
   // See item
   manager.addDocument("pt", "ver o %item%", "seeItem");
@@ -110,9 +154,9 @@ module.exports = createModel(NARRATOR, (manager) => {
   manager.addDocument("pt", "olhar %item%", "seeItem");
 
   // Drop item
-  manager.addDocument("pt", "dropar %item%", "dropItem");
-  manager.addDocument("pt", "largar %item%", "dropItem");
-  manager.addDocument("pt", "descartar %item%", "dropItem");
+  // manager.addDocument("pt", "dropar %item%", "dropItem");
+  // manager.addDocument("pt", "largar %item%", "dropItem");
+  // manager.addDocument("pt", "descartar %item%", "dropItem");
 
   // Hello
   manager.addDocument("pt", "oi", "hello");
@@ -141,4 +185,6 @@ module.exports = createModel(NARRATOR, (manager) => {
     `whoAreYou`,
     "Na minha língua nativa:\n\"Teen le jach sáasil yéetel oochel, éter yéetel yo'olal, Tene' u ts'o'okol tuláakal yéetel le principio tuláakal, Tene' narrador le k'ajláayo', ka teech le jugador, teech ti' leti'\"",
   );
+
+  manager.addAnswer("pt", `help`, "");
 });

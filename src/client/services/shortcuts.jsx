@@ -5,7 +5,7 @@ import { tap, map, filter } from "rxjs/operators";
 import Players from "../pages/Players";
 import Settings from "../pages/Settings";
 import Progress from "../pages/Progress";
-import Map from "../pages/Map";
+import Inventory from "../pages/Inventory";
 
 const Shortcuts = {
   Z: {
@@ -24,17 +24,9 @@ const Shortcuts = {
       title: "Progresso",
     },
   },
-  M: {
-    name: "Mapa",
-    render: (props) => <Map {...props}></Map>,
-    mode: "Modal",
-    extraProps: {
-      title: "Mapa",
-    },
-  },
   I: {
     name: "Inventário",
-    render: (props) => <Map {...props}></Map>,
+    render: (props) => <Inventory {...props}></Inventory>,
     mode: "SideView",
     extraProps: {
       title: "Inventário",

@@ -1,8 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocalStorage } from "../hooks/storage";
 
-const TYPE_SPEED = 1;
-
 const getTextDynamicGroups = (text, onClick, interactive = false) => (text.match(/\$(.*?)\$/gmi) ?? []).map((word, index) => {
   try {
     const text = word.match(/\[(.*?)\]/mi)[1];
@@ -86,6 +84,7 @@ export default function TypedText(props = { text: "", animate: false, interactiv
     e.preventDefault();
     if (who) whoIs?.(who.id)
   } : null;
+
 
   // Rewrite text into spans
   newText = newText.split('\n').map((line, index) => {

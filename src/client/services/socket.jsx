@@ -110,6 +110,35 @@ const onLocationChange = (cb = null) => {
   };
 }
 
+const onInventoryChange = (cb = null) => {
+  const sub$ = of(socket)
+    .pipe(
+      switchMap((socket) => fromEvent(socket, "game:inventory-change")),
+      filter((e) => e.length > 0),
+    )
+    .subscribe(async (add) => {
+      await cb?.(add);
+    });
+
+  return () => {
+    sub$?.unsubscribe();
+  };
+}
+
+const onProgressChange = (cb = null) => {
+  const sub$ = of(socket)
+    .pipe(
+      switchMap((socket) => fromEvent(socket, "game:progress-change")),
+    )
+    .subscribe(async (add) => {
+      await cb?.(add);
+    });
+
+  return () => {
+    sub$?.unsubscribe();
+  };
+}
+
 const service = {
   // Incoming
   onConnect,
@@ -119,6 +148,8 @@ const service = {
   onGameEvent,
   onGameError,
   onLocationChange,
+  onInventoryChange,
+  onProgressChange,
   io: socket,
 };
 

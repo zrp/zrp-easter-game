@@ -5,7 +5,7 @@ const { NlpManager, ConversationContext } = require("node-nlp");
 
 const l = require("../../logger");
 
-const THRESHOLD = 0.8;
+const THRESHOLD = 0.4;
 
 /**
  *
@@ -13,23 +13,16 @@ const THRESHOLD = 0.8;
  * @param {*} ctx
  * @returns
  */
-function createSayFunction(manager, ctx) {
+function createProcessFn(manager) {
   return async (query) => {
-    const r = await manager.process("pt", query, ctx);
+    const r = await manager.process("pt", query, {});
 
-    l.debug(`Raw response from nlp model: ${JSON.stringify(r, null, 2)}`);
-
-    const mostAccurateEntity = r?.entities?.sort((eB, eA) => eB.accuracy - eA.accuracy)?.[0];
-
-    return {
-      score: r.score,
-      intent: r.score > THRESHOLD && r.intent !== "None" ? r.intent : null,
-      answer: r.score > THRESHOLD && r.intent !== "None" ? r.answer : null,
-      sentiment: r.score > THRESHOLD ? (r.sentiment?.score ?? 0 != 0 ? (r.sentiment.score > 0 ? "Positive" : "Negative") : "Neutral") : null,
-      mostAccurateEntity,
-      value: mostAccurateEntity?.option ?? mostAccurateEntity?.resolution?.value,
-      conversationContext: ctx,
-    };
+    return r.score > THRESHOLD
+      ? {
+          ...r,
+          value: r.intent == "detachItem" ? r.entities.map((e) => e.option) : r.entities?.[0]?.option,
+        }
+      : {};
   };
 }
 
@@ -69,7 +62,7 @@ function createModel(char, addTrainingData = (manager) => {}) {
   return {
     manager,
     char,
-    say: (query = "", conversationContext = {}) => createSayFunction(manager, conversationContext)(query),
+    say: createProcessFn(manager),
     train: async ({ force } = { force: false }) => {
       // Load data if exists or train (or force train)
       if (fs.existsSync(filepath) && !force) {

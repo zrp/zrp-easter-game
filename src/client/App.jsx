@@ -116,7 +116,7 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
     if (prompt == '') return;
 
     try {
-      const response = await socket.io.timeout(15000).emitWithAck('prompt', { prompt });
+      const response = await socket.io.timeout(30000).emitWithAck('prompt', { prompt });
       console.log(`received ${response}`);
     } catch (err) {
       console.error(`server did not ack`, err);
@@ -336,10 +336,6 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
               <button onClick={() => handleShortcut('P')} className='px-3 h-full flex text-center border-l border-l-gray-700 items-center justify-center hover:bg-yellow-400 hover:text-black'>
                 Progresso <span className="text-xs px-2 py-1 mx-2 hidden md:flex rounded-xl bg-black text-white tracking-tighter">Ctrl + P</span>
               </button>
-              <button onClick={() => handleShortcut('M')} className='px-3 h-full flex text-center border-l border-l-gray-700 items-center justify-center hover:bg-blue-400 hover:text-black'>
-                Mapa <span className="text-xs px-2 py-1 mx-2 hidden md:flex rounded-xl bg-black text-white tracking-tighter">Ctrl + M</span>
-              </button>
-
             </div>
           </nav>
         </nav>

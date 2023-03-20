@@ -6,7 +6,7 @@ const Characters = require("../engine/characters");
 
 const queues = {};
 
-const ACK_TIMEOUT = 15000;
+const ACK_TIMEOUT = 30000;
 
 const push = async (user, state) => {
   await redisClient.rPush(`users:game:${user.id}`, JSON.stringify({ animate: false, interactive: true, ...state }));
@@ -75,15 +75,15 @@ function getRenderer(io, sessionId, user) {
   return {
     changeLocation: (location) => {
       const queue = queues[user.id]?.response;
-      queue.push(async () => await renderer("game:location-change", location, false));
+      queue.push(() => renderer("game:location-change", location, false));
     },
     add2world: (worldAdd, save = true) => {
       const queue = queues[user.id]?.response;
-      queue.push(async () => await renderer("game:response", { worldAdd: { interactive: true, animate: true, who: Characters.NARRATOR, ...worldAdd } }, save));
+      queue.push(() => renderer("game:response", { worldAdd: { interactive: true, animate: true, who: Characters.NARRATOR, ...worldAdd } }, save));
     },
     setError: (error) => {
       const queue = queues[user.id]?.error;
-      queue.push(async () => await renderer("game:error", { error }, false));
+      queue.push(() => renderer("game:error", { error }, false));
     },
   };
 }
