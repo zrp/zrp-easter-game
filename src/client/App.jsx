@@ -8,6 +8,7 @@ import SideView from './components/SideView';
 // import uiSound from './assets/sounds/ui/wind1.wav';
 import alertSvg from './assets/icons/alert.svg';
 import zrpSvg from './assets/icons/zrp.svg';
+import compass from './assets/icons/compass.png';
 
 // rxjs
 import { of, fromEvent, Observable, Subscriber } from 'rxjs';
@@ -19,6 +20,7 @@ import shortcuts from './services/shortcuts';
 import _ from 'lodash';
 
 import ResizeObserver from 'resize-observer-polyfill';
+import { useLocalStorage } from './hooks/storage';
 
 function resizeObserver(...elements) {
   return new Observable((subscriber) => {
@@ -36,7 +38,6 @@ function resizeObserver(...elements) {
 function App({ onLoaded } = { onLoaded: async () => { } }) {
   const [isConnected, setIsConnected] = useState(socket.connected);
 
-  const [qModalOpen, setQModalOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [sideViewOpen, setSideViewOpen] = useState(false);
   const [user, setUser] = useState(null);
@@ -47,8 +48,12 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
   const [world, setWorld] = useState([]);
   const [worldQueue, setWorldQueue] = useState([]);
   const [location, setLocation] = useState('');
-
+  const [question, setQuestion] = useState(null);
+  const [answer, setAnswer] = useState('');
   const [shortcut, setShortcut] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(0);
+
+  const [showWindRoses] = useLocalStorage('layout:windRoses', false);
 
   // Refs
   const terminalRef = useRef(null);
@@ -155,6 +160,24 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
     }
   }
 
+  const onAnswerSubmit = async (ev) => {
+    ev.preventDefault();
+
+    if (answer == '') return;
+
+    try {
+      const response = await socket.io.timeout(30000).emitWithAck('game:challenge-response', { answer });
+      console.log(`received ${response}`);
+    } catch (err) {
+      console.error(`server did not ack`, err);
+    }
+
+    setQuestion(null);
+    setAnswer(null);
+
+    promptInputRef.current?.focus();
+    scrollToBottom();
+  }
 
   // Initial effects
   useEffect(() => {
@@ -172,13 +195,16 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
 
     const cancelUsersUpdated = socket.onUsersUpdated(setUsers)
     const cancelLocationChange = socket.onLocationChange(setLocation)
+    const cancelChallenge = socket.onChallenge(q => {
+      setQuestion({ ...q, options: _.shuffle(q.options) });
+    });
 
     const cancelLoadingEffect = loadingEffect();
 
 
-
     return () => {
       cancelConnect();
+      cancelChallenge();
       cancelDisconnect();
       cancelGameLoaded();
       cancelUsersUpdated();
@@ -340,8 +366,10 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
           </nav>
         </nav>
 
+        {showWindRoses ? <img src={compass} className='w-32 h-32 fixed right-8 top-24 z-50 invert' /> : <></>}
 
-        <div id="terminal" ref={terminalRef} className='p-4 min-h-full flex-grow relative cursor-pointer' onClick={() => promptInputRef?.current?.focus()}>
+
+        <div id="terminal" ref={terminalRef} className='p-4 min-h-full flex-grow relative cursor-pointer' onClick={() => promptInputRef?.current?.focus()} disabled={question}>
           {world.map((prompt, index) => {
             if (!prompt) return;
 
@@ -356,11 +384,29 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
               afterRender={prompt?.afterRender}
             />
           })}
-          {!rendering ? <form onSubmit={handleSubmit} className='h-12 bg-gray-900 sticky bottom-0 z-50 left-0 w-full flex items-center justify-center'>
+          {!rendering && !question ? <form onSubmit={handleSubmit} className='h-12 bg-gray-900 sticky bottom-0 z-50 left-0 w-full flex items-center justify-center'>
             <span className="flex mr-4 h-full items-center ml-0"><b className="text-orange-400">&gt;</b></span>
             <input ref={promptInputRef} type="text" name="prompt" value={prompt} onChange={handleChange} disabled={worldQueue.length > 0} className="w-full bg-transparent font-mono text-white outline-none" />
             <button type="submit" className='sr-only'></button>
           </form> : <></>}
+          {question ?
+            <form className='p-4 bg-blue-500 bg-opacity-10 rounded-xl' noValidate autoComplete='off' onSubmit={onAnswerSubmit}>
+              <h1 className="text-xl mb-4">{question.question}</h1>
+              <ul>
+                {question.options.map((option) => {
+                  return <li class="w-full border-gray-200 rounded-t-lg dark:border-gray-600">
+                    <div class="flex items-center ml-1">
+                      <input type="checkbox" value={option} checked={answer == option} onChange={(e) => setAnswer(e.target.value)} name="answer" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 " />
+                      <label for="vue-checkbox" class="w-full py-3 ml-3 text-lg font-medium text-gray-200">{option}</label>
+                    </div>
+                  </li>
+                })}
+              </ul>
+              <button className={`text-sm font-medium text-center bg-black py-3 px-8 rounded-xl mt-4 mb-4 ${answer ? 'hover:bg-green-400 hover:text-black' : 'opacity-25'}`} disabled={!answer}>
+                Validar resposta
+              </button>
+            </form>
+            : <></>}
         </div>
 
         {worldQueue.length > 0 && rendering ? <div ref={typingRef} className='text-xs ml-4 mb-2 bg-gray-900 text-gray-100 rounded-md w-24 text-left p-1 px-2 '>Digitando<span></span></div> : <></>}
@@ -370,27 +416,7 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
           <p className='text-sm'>{error?.message}</p>
         </div>
 
-        <Modal open={qModalOpen} title={'ZRP > Easter23 > Pergunta #1'} onClose={() => setQModalOpen(false)}>
-          <div className="p-4 flex-grow">
-            <h1 className="text-2xl">Quem é considerada a primeira pessoa programadora da história?</h1>
-            <ul>
-              <li>
-                <input type="checkbox" />
-                <label>Ada Lovelace</label>
-              </li>
-              <li>
-                <input type="checkbox" />
-                <label>Alan Turing</label>
-              </li>
-            </ul>
-          </div>
 
-          <nav className='w-100 h-10 border-t border-t-gray-50'>
-            <button className='flex h-full w-full text-center border-l border-l-gray-50 ml-auto items-center justify-center hover:bg-green-400 hover:text-black rounded-br'>
-              <span className='text-sm font-medium'>Validar resposta</span>
-            </button>
-          </nav>
-        </Modal>
 
         {
           shortcut?.mode ? (

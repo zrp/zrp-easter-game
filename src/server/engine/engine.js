@@ -17,7 +17,7 @@ const { addMessages, addSteps, addVisit, getTransitionName } = require("./contex
 const { ITEMS, seeItem, readItem, item2txt, detachItem } = require("./inventory");
 const { defaultActions } = require("./actions");
 
-const { l01, l02Attic, l02Tunnel, l03, l04, l05, l06 } = require("./levels");
+const { l01, l02Attic, l02Tunnel, l02Boss, l03, l04, l05, l06 } = require("./levels");
 
 const npcs = require("./npcs");
 
@@ -67,11 +67,14 @@ const shortcuts = {
 const createEngine = (user) => {
   const subject = new Subject();
   const location$ = new Subject();
+  const question$ = new Subject();
 
   const initialContext = {
     steps: 0,
     score: 0,
     name: "Pedro",
+    currentQuestion: null,
+    questions: [],
     messages: [],
     visited: {},
     inventory: [],
@@ -104,7 +107,7 @@ const createEngine = (user) => {
       },
       "l02-tunnel.entrance.door": {
         open: false,
-        attemptsRemaining: 10,
+        attemptsRemaining: 5,
       },
       "l03.machine": {
         state: "off",
@@ -125,10 +128,16 @@ const createEngine = (user) => {
     preserveActionOrder: true,
     id: "game",
     context: _.clone(initialContext),
-    initial: "l01",
+    initial: "idle",
     on: {
       lookAround: {
         target: "#game.hist",
+      },
+      restart: {
+        target: "game-over",
+        actions: (ctx) => {
+          ctx.steps = 0;
+        },
       },
       getInventory: {
         actions: assign({
@@ -154,9 +163,7 @@ const createEngine = (user) => {
               ...ctx.messages,
               {
                 prompt: `Você ${
-                  ctx.steps == 0
-                    ? "não deu nenhum passo."
-                    : `deu ${ctx.steps} passo${ctx.steps > 1 ? "s" : ""}. Isso corresponde ~${(ctx.steps * 0.938).toFixed(2)}Km.`
+                  ctx.steps == 0 ? "não deu nenhum passo." : `deu ${ctx.steps} passo${ctx.steps > 1 ? "s" : ""}. Seu score atual é ${ctx.score}.`
                 }\nVocê se encontra no momento em: ${ctx.location}`,
               },
             ];
@@ -253,17 +260,18 @@ const createEngine = (user) => {
         },
       },
       "game-over": {
-        entry: assign(
-          _.merge({
+        entry: (ctx) =>
+          (ctx = {
             ...initialContext,
-            messages: [{ prompt: "Como num passe de mágica, você se vê voltando no tempo, tudo lhe parece familiar, mas diferente. O que será que ocorreu?" }],
+            steps: ctx.steps,
+            messages: ["Como num passe de mágica, você se vê voltando no tempo, tudo lhe parece familiar, mas diferente. O que será que ocorreu?"],
           }),
-        ),
         always: [{ target: "l01" }],
       },
       l01,
       l02Attic,
       l02Tunnel,
+      l02Boss,
       l03,
       l04,
       l05,
@@ -277,6 +285,11 @@ const createEngine = (user) => {
   const saver = createSaver(user);
 
   const fsm = interpret(machine, { devTools: true }).onTransition(async (state) => {
+    if (state?.context?.currentQuestion) {
+      const question = state.context.currentQuestion;
+      question$.next(question);
+    }
+
     if (state?.changed) {
       l.debug(`FSM transitioned to ${JSON.stringify(state?.value)} due to ${state._event?.name} (${state._event?.type})`);
 
@@ -296,8 +309,8 @@ const createEngine = (user) => {
   });
 
   return {
-    start: (savegame) => {
-      if (!fsm.initialized) {
+    start: (savegame, force = false) => {
+      if (!fsm.initialized || force) {
         savegame ? fsm.start(savegame) : fsm.start();
         l.info(`⚡ Engine started!`);
       }
@@ -308,12 +321,19 @@ const createEngine = (user) => {
       }
 
       // Reload data for subscribers
+      question$.next(fsm?.state?.context?.currentQuestion);
       location$.next(fsm?.state?.context?.location);
     },
     onLocationChange: (cb = null) => {
       location$.pipe(distinctUntilChanged()).subscribe((location) => {
         l.debug(`Location changed to ${location}`);
         cb?.(location);
+      });
+    },
+    onQuestion: (cb = null) => {
+      question$.pipe(distinctUntilChanged()).subscribe((question) => {
+        l.debug(`question changed to`, question);
+        cb?.(question);
       });
     },
     onUpdate: (cb = null) => {

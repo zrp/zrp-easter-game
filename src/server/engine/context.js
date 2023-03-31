@@ -21,7 +21,11 @@ function addVisit(location) {
 }
 
 function addSteps(ctx, event) {
-  return ctx.steps + 1;
+  if (ctx.steps > 9999) {
+    return ctx.steps;
+  } else {
+    return ctx.steps + 1;
+  }
 }
 
 function acceptedMission(name) {

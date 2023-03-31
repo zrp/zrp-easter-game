@@ -32,7 +32,7 @@ module.exports = createModel(NARRATOR, (manager) => {
   manager.addNamedEntityText("item", "note", ["pt"], ["nota", "leaflet"]);
   manager.addNamedEntityText("item", "diary", ["pt"], ["diário", "caderno do bun", "caderno do coelho", "diário do coelho"]);
   manager.addNamedEntityText("item", "table", ["pt"], ["mesa", "escrivaninha"]);
-  manager.addNamedEntityText("item", "mailbox", ["pt"], ["caixa de correio", "correio"]);
+  manager.addNamedEntityText("item", "mailbox", ["pt"], ["caixa de correio", "correio", "caixa"]);
   manager.addNamedEntityText("item", "machine", ["pt"], ["máquina", "teletransportador"]);
   manager.addNamedEntityText("item", "window", ["pt"], ["janela", "janela entreaberta"]);
   manager.addNamedEntityText("item", "door", ["pt"], ["porta"]);
@@ -81,9 +81,12 @@ module.exports = createModel(NARRATOR, (manager) => {
 
   // Enter location
   manager.addDocument("pt", "entrar na %location%", "enterLocation");
-  manager.addDocument("pt", "entrar em %location%", "enterLocation");
+  manager.addDocument("pt", "entrar pela %item%", "enterLocation");
 
   // Type
+  manager.addDocument("pt", "digitar", "type");
+  manager.addDocument("pt", "escrever", "type");
+  manager.addDocument("pt", "inputar", "type");
   manager.addDocument("pt", "digitar %answer%", "type");
   manager.addDocument("pt", 'digitar "%answer%"', "type");
   manager.addDocument("pt", 'inputar "%answer%"', "type");

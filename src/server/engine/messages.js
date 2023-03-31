@@ -16,7 +16,7 @@ const Messages = {
   },
   startOfGame: {
     intro: {
-      prompt: `Bem-vindo ao desafio de páscoa da ZRP!\nEste jogo é um tributo ao jogo interativo ZORK, um jogo baseado em texto e processamento natural de linguagem lançado originalmente em 1977.\nNessa primeira parte o jogo é parecido com o original, você começará no mesmo lugar (A oeste da casa), mas o mapa e os desafios são outros.\nO resto do jogo é totalmente original, e testará sua capacidade lógica e de desenvolvedor!\nVocê está pronto?!`,
+      prompt: `Bem-vindo ao desafio de páscoa da ZRP!\nVocê está pronto?!`,
     },
     approve: {
       prompt: `Ok! Mas não vá se arrepender...`,

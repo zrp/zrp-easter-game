@@ -110,6 +110,26 @@ const onLocationChange = (cb = null) => {
   };
 }
 
+const onChallenge = (cb = null) => {
+  const sub$ = of(socket)
+    .pipe(
+      switchMap((socket) => fromEvent(socket, "game:challenge")),
+      switchMap(([data, callback]) => {
+        callback("ACK");
+
+        return of(data);
+      }),
+      filter(data => !!data),
+    )
+    .subscribe(async (add) => {
+      await cb?.(add);
+    });
+
+  return () => {
+    sub$?.unsubscribe();
+  };
+}
+
 const onInventoryChange = (cb = null) => {
   const sub$ = of(socket)
     .pipe(
@@ -150,6 +170,7 @@ const service = {
   onLocationChange,
   onInventoryChange,
   onProgressChange,
+  onChallenge,
   io: socket,
 };
 

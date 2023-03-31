@@ -28,6 +28,11 @@ async function getSave(user) {
   }
 }
 
+async function deleteSave(user) {
+  await redisClient.del(`users:save:${user.id}`);
+  await redisClient.del(`users:game:${user.id}`);
+}
+
 function createSaver(user) {
   return async (save) => {
     const data = JSON.stringify(save);
@@ -46,24 +51,30 @@ async function setCooldown(user, action, ttl = 3) {
 }
 
 function getRenderer(io, sessionId, user) {
-  const renderer = async (eventName, data, save = true) => {
-    return new Promise((resolve, reject) =>
-      io
-        .to(sessionId)
-        .timeout(ACK_TIMEOUT)
-        .emit(eventName, data, async (err, response) => {
-          if (err) {
-            l.error(`Some clients did not ack the game:response in time`);
-            reject(err);
-          } else {
+  const renderer =
+    (eventName, data, save = true) =>
+    () =>
+      new Promise((resolve, reject) =>
+        io
+          .to(sessionId)
+          .timeout(ACK_TIMEOUT)
+          .emit(eventName, data, (err, response) => {
+            if (err) {
+              l.error(`Some clients did not ack the game:response in time`);
+              reject(err);
+              return;
+            }
+
             l.debug(`Received ack from client: ${response}`);
-            if (save && data?.worldAdd) await push(user, data?.worldAdd);
+
+            if (save && data?.worldAdd) {
+              push(user, data?.worldAdd).then(resolve);
+              return;
+            }
 
             resolve();
-          }
-        }),
-    );
-  };
+          }),
+      );
 
   if (!queues[user.id]) {
     queues[user.id] = {
@@ -75,15 +86,19 @@ function getRenderer(io, sessionId, user) {
   return {
     changeLocation: (location) => {
       const queue = queues[user.id]?.response;
-      queue.push(() => renderer("game:location-change", location, false));
+      queue.push(renderer("game:location-change", location, false));
+    },
+    sendChallenge: (question) => {
+      const queue = queues[user.id]?.response;
+      queue.push(renderer("game:challenge", question, false));
     },
     add2world: (worldAdd, save = true) => {
       const queue = queues[user.id]?.response;
-      queue.push(() => renderer("game:response", { worldAdd: { interactive: true, animate: true, who: Characters.NARRATOR, ...worldAdd } }, save));
+      queue.push(renderer("game:response", { worldAdd: { interactive: true, animate: true, who: Characters.NARRATOR, ...worldAdd } }, save));
     },
     setError: (error) => {
       const queue = queues[user.id]?.error;
-      queue.push(() => renderer("game:error", { error }, false));
+      queue.push(renderer("game:error", { error }, false));
     },
   };
 }
@@ -96,6 +111,7 @@ module.exports = {
   isCooldownActive,
   setCooldown,
   getRenderer,
+  deleteSave,
   // pushPrompt: addNewState,
   // getNextStateFn
 };

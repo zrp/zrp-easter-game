@@ -1,12 +1,13 @@
-const redisClient = require('../database');
-
-const l = require('../logger');
-const { generateNickname, getNicknameDescription } = require('./nicknameService');
+const redisClient = require("../database");
+const _ = require("lodash");
+const l = require("../logger");
+const { getSave } = require("./gameService");
+const { generateNickname, getNicknameDescription } = require("./nicknameService");
 
 const predictor = async (name) => {
-  const result = 'male';
+  const result = "male";
 
-  return result == 'female' ? 'F' : 'M';
+  return result == "female" ? "F" : "M";
 };
 
 async function upsertUser(user) {
@@ -42,27 +43,39 @@ async function getUser(id) {
   const gender = await predictor(data.name.givenName);
   const description = `${data.name?.givenName}, ${nickname}, ${getNicknameDescription(nickname, gender)}`;
 
+  const save = await getSave({ id });
+
   return {
     ...data,
     status,
     gender,
     nickname,
     description,
-  }
+    score: save?.context?.score ?? 0,
+  };
 }
 
 async function getUsers() {
-  let users = Object.values((await redisClient.hGetAll(`users:data`))).map(JSON.parse);
-  const status = (await redisClient.hGetAll(`users:status`));
+  let users = Object.values(await redisClient.hGetAll(`users:data`)).map(JSON.parse);
+  const status = await redisClient.hGetAll(`users:status`);
 
-  users = users.map(user => ({
-    ...user,
-    status: status[user.id]
-  }));
+  users = await Promise.all(
+    users.map(async (user) => {
+      const save = await getSave({ id: user.id });
+
+      return {
+        ...user,
+        score: save?.context?.score ?? 0,
+        status: status[user.id],
+      };
+    }),
+  );
+
+  users = _.reverse(_.sortBy(users, (u) => u.score));
 
   return {
     users,
-    online: users.filter(u => u.status == 'online').length,
+    online: users.filter((u) => u.status == "online").length,
     total: users.length,
   };
 }
@@ -72,4 +85,4 @@ module.exports = {
   getUsers,
   getUser,
   setUserStatus,
-}
+};

@@ -21,6 +21,11 @@ const createSocketIoServer = (httpServer) => {
   // Middleware for authentication
   io.use((client, next) => session(client.request, {}, next));
 
+  // Update about users
+  setInterval(async () => {
+    io.emit("ui:user_list", await getUsers());
+  }, 5000);
+
   // Add a connection handler to set listeners for client
   io.on("connection", async (client) => {
     l.info(`New connection on socket with id=${client.id}`);

@@ -27,7 +27,7 @@ const l03 = {
         messages: (ctx) =>
           addMessages([
             {
-              prompt: `Laboratório\nVocê abre a porta e se depara com um moderno laboratório. Ao leste da sala você vê uma máquina estranha. Ela parece ${
+              prompt: `Laboratório\nVocê abre a porta e se depara com um moderno laboratório. A porta rapidamente se fecha. Ela parece queimada de vez.\nAo leste da sala você vê uma máquina estranha. Ela parece ${
                 ctx.openLocks["l03.machine"]?.state == "on" ? "ligada" : "desligada"
               }. Você vê papéis amontoados numa mesa do seu lado. No fundo da sala você vê um coelho sentado. Ele parece desolado.\n`,
             },

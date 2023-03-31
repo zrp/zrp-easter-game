@@ -116,6 +116,7 @@ const l04 = {
       always: [{ target: "lab-east-2", cond: (ctx) => ctx.objects["web.lab.door-01"].open }],
       on: {
         ...defaultActions,
+        goWest: "web-machine",
         type: [
           {
             target: "lab-east-2",

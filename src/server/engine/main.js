@@ -1,7 +1,7 @@
 const Engine = require("./engine");
 
 const { getUser } = require("../services/userService");
-const { getWorldState, getRenderer, getSave, isCooldownActive, setCooldown } = require("../services/gameService");
+const { getWorldState, getRenderer, getSave, isCooldownActive, setCooldown, deleteSave } = require("../services/gameService");
 
 const { PLAYER } = require("./characters");
 
@@ -12,7 +12,7 @@ const attachHandler = async (io, client, { id: userId }, sessionId) => {
 
   const { user, world, savegame } = await loadGame(userId);
 
-  const { add2world, setError, changeLocation } = getRenderer(io, sessionId, user);
+  const { add2world, setError, changeLocation, sendChallenge } = getRenderer(io, sessionId, user);
 
   const engine = Engine.createEngine(user);
 
@@ -22,6 +22,22 @@ const attachHandler = async (io, client, { id: userId }, sessionId) => {
 
   engine.onLocationChange((location) => {
     changeLocation(location);
+  });
+
+  engine.onQuestion((question) => {
+    sendChallenge(question);
+  });
+
+  client.on("game:restart", async (cb) => {
+    if (cb) cb("SYN_SERVER");
+
+    await deleteSave(user);
+
+    io.to(sessionId).emit("game:loaded", { user, world: [] });
+
+    const fsm = engine._fsm;
+
+    fsm.send("restart");
   });
 
   client.on("game:update-inventory", async (cb) => {
@@ -42,6 +58,14 @@ const attachHandler = async (io, client, { id: userId }, sessionId) => {
     const { steps, score } = fsm?.state?.context ?? { steps: 0, score: 0 };
 
     io.to(sessionId).emit("game:progress-change", { steps, score });
+  });
+
+  client.on("game:challenge-response", async ({ answer }, cb) => {
+    if (cb) cb("SYN_SERVER");
+
+    const fsm = engine._fsm;
+
+    fsm.send("testAnswer", { answer });
   });
 
   // Attach handler

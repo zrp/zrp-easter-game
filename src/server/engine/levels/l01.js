@@ -111,14 +111,16 @@ const l01 = {
         goSouth: "south-of-house",
         goWest: [
           {
-            actions: raise("go2l02"),
+            target: "#l02-attic",
+            actions: (ctx) => (ctx.score += 3),
             cond: (ctx) => ctx.openLocks["l01.behind-house.window"],
           },
           { actions: assign({ messages: [{ prompt: "A janela está fechada demais para uma pessoa passar." }] }) },
         ],
         enterLocation: [
           {
-            actions: raise("go2l02"),
+            target: "#l02-attic",
+            actions: (ctx) => (ctx.score += 3),
             cond: (ctx, { value }) => value === "house" && ctx.openLocks["l01.behind-house.window"],
           },
           {
@@ -133,6 +135,7 @@ const l01 = {
             actions: assign({
               messages: [{ prompt: `Você fez um tremendo esforço, mas conseguiu abrir a janela o suficiente para permitir que uma pessoa passe.` }],
               openLocks: (ctx) => _.merge(ctx.openLocks, { "l01.behind-house.window": true }),
+              score: (ctx) => ctx.score + 3,
             }),
             cond: (_, { value }) => {
               return value == "window";
@@ -182,7 +185,7 @@ const l01 = {
     clearing: {
       entry: assign({
         messages: addMessages({ prompt: `Clareira\n` }),
-        visited: addVisit("florest-path"),
+        visited: addVisit("clearing"),
         steps: addSteps,
         location: "Clareira",
       }),
@@ -219,12 +222,17 @@ const l01 = {
         messages: addMessages({
           prompt: `Vista para o desfiladeiro\nVocê está no topo do desfiladeiro, em sua parede oeste. Daqui há uma vista maravilhosa para o rio abaixo. Do outro lado do desfiladeiro as paredes dos penhascos brancos se unem às poderosas muralhas das montanhas. Seguindo o desfiladeiro rio acima, para o norte, uma cidade pode ser vista. O rio flui de uma grande caverna escura. A oeste e a sul avista-se uma imensa floresta, estendendo-se por quilômetros ao redor. Você vê uma passagem estreita à noroeste, ela parece te levar à base do desfiladeiro.`,
         }),
+        location: "Vista para o Desfiladeiro",
         visited: addVisit("canyon"),
         steps: addSteps,
       }),
       on: {
         ...defaultActions,
-        goNorthWest: "#l02-tunnel",
+        goWest: "east-florest",
+        goNorthWest: {
+          target: "#l02-tunnel",
+          actions: (ctx) => (ctx.score += 4),
+        },
       },
     },
     "west-florest": {
