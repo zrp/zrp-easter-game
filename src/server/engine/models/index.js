@@ -5,7 +5,7 @@ const { NlpManager, ConversationContext } = require("node-nlp");
 
 const l = require("../../logger");
 
-const THRESHOLD = 0.4;
+const THRESHOLD = 0.2;
 
 /**
  *

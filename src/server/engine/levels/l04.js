@@ -1,15 +1,7 @@
-const { assign, raise } = require("xstate");
-
 const { ITEMS, ITEM_IDS } = require("../inventory");
 const { defaultActions } = require("../actions");
 
-const _ = require("lodash");
-
-const Messages = require("../messages");
 const Characters = require("../characters");
-const l = require("../../logger");
-const { choose } = require("xstate/lib/actions");
-const { addSteps } = require("../context");
 
 const nextState = (messageOrFn = "", location = null, score = 0) => {
   return (ctx) => {
@@ -41,44 +33,8 @@ const machineActions = {
       }
     },
   },
-  turnOff: [
-    brokenGuard,
-    {
-      actions: assign({
-        messages: [
-          {
-            prompt: `Você desligou a máquina.`,
-          },
-        ],
-        objects: (ctx) => _.merge(ctx.objects, { "web.machine": { state: "off" } }),
-      }),
-      cond: (ctx) => ctx.objects["web.machine"]?.state == "on",
-    },
-    {
-      actions: assign({
-        messages: [{ prompt: `A máquina já está desligada.` }],
-      }),
-    },
-  ],
-  turnOn: [
-    brokenGuard,
-    {
-      actions: assign({
-        messages: [
-          {
-            prompt: `Você ligou a máquina. Ao fazê-lo, ela pede que você digite a senha para ativação.`,
-          },
-        ],
-        objects: (ctx) => _.merge(ctx.objects, { "web.machine": { state: "off" } }),
-      }),
-      cond: (ctx) => ctx.objects["web.machine"]?.state == "on",
-    },
-    {
-      actions: assign({
-        messages: [{ prompt: `A máquina já está ligada. Ela pede uma senha de ativação.` }],
-      }),
-    },
-  ],
+  turnOff: [brokenGuard],
+  turnOn: [brokenGuard],
 };
 
 const l04 = {
@@ -111,11 +67,10 @@ const l04 = {
       },
     },
     "lab-north": {
-      entry: assign({
-        messages: [`Você vê uma lousa imensa na parede norte. Ela parece conter algumas fórmulas.`],
-        location: "W'eb / Laboratório (Sala de Estudos)",
-        addSteps,
-      }),
+      entry: nextState(
+        `Você vê uma lousa imensa na parede norte. Ela parece conter algumas fórmulas.`,
+        "W'eb / Laboratório (Sala de Estudos)",
+      ),
       on: {
         ...defaultActions,
         seeItem: {
@@ -165,11 +120,10 @@ const l04 = {
       },
     },
     "lab-east-2": {
-      entry: assign({
-        messages: (ctx) => [
+      entry: (ctx) =>
+        ctx.messages.push(
           `Você se depara com uma segunda porta. Essa parece ser a verdadeira saída do laboratório, mas a porta parece emperrada.`,
-        ],
-      }),
+        ),
       on: {
         ...defaultActions,
         goWest: "web-machine",
@@ -185,15 +139,13 @@ const l04 = {
       },
     },
     "lab-south": {
-      entry: assign({
-        messages: (ctx) => [
+      entry: nextState(
+        (ctx) =>
           `Você vê os fundos do laboratório. Uma sala grande e relativamente vazia, com ${
             ctx.objects["web.lab.rug"].open ? "uma mesa e tapete no canto" : "uma mesa no canto e um tapete ao centro"
           }. ${ctx.objects["web.lab.rug"].open ? "No meio você vê um alçapão." : ""}`,
-        ],
-        location: "W'eb / Fundo do Laboratório",
-        steps: addSteps,
-      }),
+        "W'eb / Fundo do Laboratório",
+      ),
       on: {
         ...defaultActions,
         goNorth: "web-machine",

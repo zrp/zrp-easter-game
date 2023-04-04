@@ -55,8 +55,11 @@ module.exports = createModel(NARRATOR, (manager) => {
 
   // Go direction
   manager.addDocument("pt", "ir para %direction%", "goDirection");
+  manager.addDocument("pt", "ir para %item%", "goDirection");
   manager.addDocument("pt", "ir pro %direction%", "goDirection");
+  manager.addDocument("pt", "ir pro %item%", "goDirection");
   manager.addDocument("pt", "vai pro %direction%", "goDirection");
+  manager.addDocument("pt", "vai pro %item%", "goDirection");
   manager.addDocument("pt", "%direction%", "goDirection");
 
   // Go down or go up
@@ -70,48 +73,84 @@ module.exports = createModel(NARRATOR, (manager) => {
   manager.addDocument("pt", "me ajuda", "help");
   manager.addDocument("pt", "socorro", "help");
   manager.addDocument("pt", "sos", "help");
+  manager.addDocument("pt", "tá foda", "help");
+  manager.addDocument("pt", "do you speak english?", "speakEnglish");
 
   // Push or Pull
   manager.addDocument("pt", "puxar o %item%", "pull");
+  manager.addDocument("pt", "puxe o %item%", "pull");
+  manager.addDocument("pt", "puxa o %item%", "pull");
   manager.addDocument("pt", "tirar o %item%", "pull");
+  manager.addDocument("pt", "tire o %item%", "pull");
+  manager.addDocument("pt", "tira o %item%", "pull");
   manager.addDocument("pt", "empurrar o %item%", "push");
+  manager.addDocument("pt", "empurre o %item%", "push");
+  manager.addDocument("pt", "empurra o %item%", "push");
   manager.addDocument("pt", "afastar o %item%", "push");
+  manager.addDocument("pt", "afaste o %item%", "push");
+  manager.addDocument("pt", "afasta o %item%", "push");
 
   // Turn on
   manager.addDocument("pt", "ligar a %item%", "turnOn");
   manager.addDocument("pt", "ligar o %item%", "turnOn");
+  manager.addDocument("pt", "ligue o %item%", "turnOn");
+  manager.addDocument("pt", "liga a %item%", "turnOn");
 
   // Turn off
   manager.addDocument("pt", "desligar a %item%", "turnOff");
   manager.addDocument("pt", "desligar o %item%", "turnOff");
+  manager.addDocument("pt", "desligue o %item%", "turnOff");
+  manager.addDocument("pt", "desliga o %item%", "turnOff");
 
   // Put
   manager.addDocument("pt", "colocar o %item%", "putItem");
+  manager.addDocument("pt", "coloque o %item%", "putItem");
+  manager.addDocument("pt", "coloque a %item%", "putItem");
   manager.addDocument("pt", "colocar a %item%", "putItem");
   manager.addDocument("pt", "botar o %item%", "putItem");
   manager.addDocument("pt", "botar a %item%", "putItem");
+  manager.addDocument("pt", "bote a %item%", "putItem");
+  manager.addDocument("pt", "bote o %item%", "putItem");
   manager.addDocument("pt", "inserir o %item%", "putItem");
   manager.addDocument("pt", "inserir a %item%", "putItem");
+  manager.addDocument("pt", "insira a %item%", "putItem");
+  manager.addDocument("pt", "insira o %item%", "putItem");
 
   // Enter location
   manager.addDocument("pt", "entrar na %location%", "enterLocation");
   manager.addDocument("pt", "entrar pela %item%", "enterLocation");
+  manager.addDocument("pt", "entre na %location%", "enterLocation");
+  manager.addDocument("pt", "entre no %location%", "enterLocation");
+  manager.addDocument("pt", "entre pela %location%", "enterLocation");
+  manager.addDocument("pt", "entre na %item%", "enterLocation");
+  manager.addDocument("pt", "entre no %item%", "enterLocation");
+  manager.addDocument("pt", "entre pela %item%", "enterLocation");
 
   // Type
   manager.addDocument("pt", "digitar", "type");
+  manager.addDocument("pt", "digite", "type");
   manager.addDocument("pt", "escrever", "type");
+  manager.addDocument("pt", "escreva", "type");
   manager.addDocument("pt", "inputar", "type");
+  manager.addDocument("pt", "inpute", "type");
   manager.addDocument("pt", "digitar %answer%", "type");
+  manager.addDocument("pt", "digite %answer%", "type");
   manager.addDocument("pt", 'digitar "%answer%"', "type");
+  manager.addDocument("pt", 'digita "%answer%"', "type");
   manager.addDocument("pt", 'inputar "%answer%"', "type");
+  manager.addDocument("pt", 'inpute "%answer%"', "type");
   manager.addDocument("pt", "inputar %answer%", "type");
   manager.addDocument("pt", "escrever %answer%", "type");
+  manager.addDocument("pt", "escreva %answer%", "type");
   manager.addDocument("pt", 'escrever "%answer%"', "type");
+  manager.addDocument("pt", 'escreve "%answer%"', "type");
 
   // Speak to
   manager.addDocument("pt", "falar com %npc%", "speakTo");
   manager.addDocument("pt", "oi %npc%", "speakTo");
   manager.addDocument("pt", "interagir com %npc%", "speakTo");
+  manager.addDocument("pt", "fale com %npc%", "speakTo");
+  manager.addDocument("pt", "ir até o %npc%", "speakTo");
 
   // Read
   manager.addDocument("pt", "ler %item%", "readItem");
@@ -120,6 +159,8 @@ module.exports = createModel(NARRATOR, (manager) => {
   manager.addDocument("pt", "olhar em volta", "lookAround");
   manager.addDocument("pt", "olhar ao redor", "lookAround");
   manager.addDocument("pt", "onde estou?", "lookAround");
+  manager.addDocument("pt", "cadê eu?", "lookAround");
+  manager.addDocument("pt", "onde eu tô?", "lookAround");
 
   // Aprove
   manager.addDocument("pt", "bora", "approve");
@@ -142,35 +183,53 @@ module.exports = createModel(NARRATOR, (manager) => {
 
   // Open item
   manager.addDocument("pt", "abrir %item%", "openItem");
+  manager.addDocument("pt", "abra %item%", "openItem");
+  manager.addDocument("pt", "abre %item%", "openItem");
   manager.addDocument("pt", "abrir o %item%", "openItem");
   manager.addDocument("pt", "abrir a %item%", "openItem");
 
   // Detach item
+  manager.addDocument("pt", "remove o %item_1% da %item_2%", "detachItem");
+  manager.addDocument("pt", "remova o %item_1% da %item_2%", "detachItem");
   manager.addDocument("pt", "remover o %item_1% da %item_2%", "detachItem");
   manager.addDocument("pt", "destacar o %item_1% da %item_2%", "detachItem");
+  manager.addDocument("pt", "destaque o %item_1% da %item_2%", "detachItem");
+  manager.addDocument("pt", "destaca o %item_1% da %item_2%", "detachItem");
+  manager.addDocument("pt", "separa o %item_1% da %item_2%", "detachItem");
   manager.addDocument("pt", "separar o %item_1% da %item_2%", "detachItem");
   manager.addDocument("pt", "retirar o %item_1% da %item_2%", "detachItem");
+  manager.addDocument("pt", "retira o %item_1% da %item_2%", "detachItem");
   manager.addDocument("pt", "tirar o %item_1% da %item_2%", "detachItem");
+  manager.addDocument("pt", "tira o %item_1% da %item_2%", "detachItem");
 
   manager.slotManager.addSlot("detachItem", "item_1", true, { pt: "De onde retirar o {{ item_1 }}?" });
   manager.slotManager.addSlot("detachItem", "item_2", true, { pt: "Separar o {{ item_1 }} do que?" });
 
   // Grab item
   manager.addDocument("pt", "pegar a %item%", "grabItem");
+  manager.addDocument("pt", "pega a %item%", "grabItem");
+  manager.addDocument("pt", "pegue a %item%", "grabItem");
   manager.addDocument("pt", "segurar a %item%", "grabItem");
+  manager.addDocument("pt", "segura a %item%", "grabItem");
+  manager.addDocument("pt", "segure a %item%", "grabItem");
   manager.addDocument("pt", "roubar o %item%", "grabItem");
+  manager.addDocument("pt", "roube o %item%", "grabItem");
 
   // Fix item
   manager.addDocument("pt", "consertar o %item%", "fixItem");
   manager.addDocument("pt", "consertar a %item%", "fixItem");
+  manager.addDocument("pt", "conserte a %item%", "fixItem");
+  manager.addDocument("pt", "conserta o %item%", "fixItem");
 
   // See item
   manager.addDocument("pt", "ver o %item%", "seeItem");
+  manager.addDocument("pt", "veja o %item%", "seeItem");
   manager.addDocument("pt", "ver a %item%", "seeItem");
   manager.addDocument("pt", "visualizar a %item%", "seeItem");
   manager.addDocument("pt", "olhar o %item%", "seeItem");
   manager.addDocument("pt", "olhar a %item%", "seeItem");
   manager.addDocument("pt", "olhar %item%", "seeItem");
+  manager.addDocument("pt", "olhe %item%", "seeItem");
 
   // Drop item
   // manager.addDocument("pt", "dropar %item%", "dropItem");
@@ -201,12 +260,34 @@ module.exports = createModel(NARRATOR, (manager) => {
   // Questions for who is the narrator
   manager.addDocument("pt", "quem é você?", "whoAreYou");
   manager.addDocument("pt", "o que é você?", "whoAreYou");
+  manager.addDocument("pt", "quem você é?", "whoAreYou");
+  manager.addDocument("pt", "o que você é?", "whoAreYou");
+
+  manager.addDocument("pt", "vai se fuder", "curse");
+  manager.addDocument("pt", "vá se fuder", "curse");
+  manager.addDocument("pt", "vsf", "curse");
+  manager.addDocument("pt", "otário", "curse");
+  manager.addDocument("pt", "pau no cu", "curse");
+  manager.addDocument("pt", "pnc", "curse");
+  manager.addDocument("pt", "vtnc", "curse");
+  manager.addDocument("pt", "vai toma no cu", "curse");
+  manager.addDocument("pt", "arrombado", "curse");
+  manager.addDocument("pt", "filho da puta", "curse");
+
+  manager.addDocument("pt", "desculpa", "apologize");
+  manager.addDocument("pt", "foi mal", "apologize");
+  manager.addDocument("pt", "era brincadeira", "apologize");
+  manager.addDocument("pt", "foi sem querer", "apologize");
 
   manager.addAnswer(
     "pt",
     `whoAreYou`,
     'Na sua língua nativa:\n"Eu sou o éter e o tempo, sou o espaço e o momento. Eu sou aquilo que você não vê, aquilo que movimenta o ser. Eu sou o que você gostaria de ter. Eu sou você."\nEu estou aqui para te ajudar a realizar a profecia. Nada mais, nada menos.',
   );
+
+  manager.addAnswer("pt", "speakEnglish", "No, solo hablo español.");
+  manager.addAnswer("pt", "speakEnglish", "Não, só falo português.");
+  manager.addAnswer("pt", "speakEnglish", "No, parlo solo italiano.");
 
   manager.addAnswer(
     "pt",
@@ -219,6 +300,14 @@ module.exports = createModel(NARRATOR, (manager) => {
     `help`,
     "Se você nunca jogou um jogo nesse estilo, eu recomendo que você dê uma olhadinha em ZORK. A ideia é a mesma.",
   );
+
+  manager.addAnswer("pt", "curse", "Você me xingar não vai te ajudar em nada.");
+  manager.addAnswer("pt", "curse", "Não gostou mermão?!");
+  manager.addAnswer("pt", "curse", "Se você continuar, serei obrigado a te kickar!!");
+
+  manager.addAnswer("pt", "apologize", "Tudo bem, está perdoado.");
+  manager.addAnswer("pt", "apologize", "Não tem problema.");
+  manager.addAnswer("pt", "apologize", "Ok, mas espero que não se repita, tá bom?");
 
   manager.addAnswer("pt", `help`, "Já tentou ver um item? Você pode ver os itens que está carregando, ou abrir o inventário.");
   manager.addAnswer(

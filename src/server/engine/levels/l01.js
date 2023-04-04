@@ -16,59 +16,49 @@ const l01 = {
   states: {
     "west-of-house": {
       initial: "idle",
-      entry: assign({
-        messages: addMessages(Messages.westOfHouse.entry),
-        visited: addVisit("west-of-house"),
-        steps: addSteps,
-        location: "Oeste da Casa",
-      }),
+      entry: (ctx) => {
+        ctx.messages.push(Messages.westOfHouse.entry);
+        ctx.steps += 1;
+        ctx.location = "Oeste da Casa";
+      },
       on: {
         ...defaultActions,
         goNorth: "north-of-house",
         goWest: "west-florest",
         goSouth: "south-of-house",
         goEast: {
-          actions: assign({
-            messages: [{ prompt: "A porta está fechada e você não pode abrí-la." }],
-          }),
+          actions: (ctx) => ctx.messages.push("A porta está fechada e você não pode abrí-la."),
         },
         openItem: [
           {
-            actions: (ctx, { value: item }) => {
-              if (item == "mailbox") {
-                ctx.messages.push({ prompt: `A caixa está vazia` });
-              } else {
-                ctx.messages.push({ prompt: `O que você está tentando abrir exatamente?` });
-              }
+            actions: (ctx) => {
+              ctx.messages.push(`A caixa está vazia.`);
             },
-            cond: (ctx) => ctx.items[ITEMS.mailboxNote.id],
+            cond: (ctx, { value }) => ctx.items[ITEMS.mailboxNote.id] && value == "mailbox",
           },
           {
             target: ".open-mailbox",
-            cond: (ctx, event) => event?.value === "mailbox" && !ctx.items[ITEMS.mailboxNote.id],
+            cond: (ctx, { value }) => value == "mailbox",
           },
         ],
       },
       states: {
         idle: {},
         "open-mailbox": {
-          entry: assign({
-            messages: (ctx, e) => (e.type !== "lookAround" ? addMessages(Messages.westOfHouse.mailboxOpen)(ctx, e) : null),
-          }),
+          entry: (ctx, { type }) => {
+            if (type !== "lookAround") ctx.messages.push(Messages.westOfHouse.mailboxOpen);
+          },
           on: {
             grabItem: [
               {
                 target: "idle",
                 actions: [
                   (ctx) => {
-                    ctx.score += 1;
+                    ctx.score += 2;
                     ctx.messages.push(Messages.actions.grab);
                     ctx.inventory.push(ITEMS.mailboxNote.item);
+                    ctx.items[ITEMS.mailboxNote.id] = true;
                   },
-                  assign({
-                    items: (ctx) => _.merge(ctx.items, { [ITEMS.mailboxNote.id]: true }),
-                    score: (ctx) => ctx.score + 1,
-                  }),
                 ],
                 cond: (ctx, event) => event.value == "note" && !ctx.items[ITEMS.mailboxNote.id],
               },
@@ -128,24 +118,26 @@ const l01 = {
             cond: (ctx, { value }) => value === "house" && ctx.openLocks["l01.behind-house.window"],
           },
           {
-            actions: assign({
-              messages: [{ prompt: `A janela parece estar muito fechada para isso. Talvez tentar abrí-la um pouco?` }],
-            }),
+            actions: (ctx) => ctx.messages.push(`A janela parece estar muito fechada para isso. Talvez tentar abrí-la um pouco?`),
             cond: (ctx, { value }) => value === "house" && !ctx.openLocks["l01.behind-house.window"],
           },
         ],
         openItem: [
           {
-            actions: assign({
-              messages: [
-                { prompt: `Você fez um tremendo esforço, mas conseguiu abrir a janela o suficiente para permitir que uma pessoa passe.` },
-              ],
-              openLocks: (ctx) => _.merge(ctx.openLocks, { "l01.behind-house.window": true }),
-              score: (ctx) => ctx.score + 3,
-            }),
-            cond: (_, { value }) => {
-              return value == "window";
+            actions: (ctx) => {
+              ctx.messages.push(`A janela já está aberta!`);
             },
+            cond: (ctx, { value }) => ctx.openLocks["l01.behind-house.window"] && value == "window",
+          },
+          {
+            actions: (ctx) => {
+              ctx.messages.push(
+                `Você fez um tremendo esforço, mas conseguiu abrir a janela o suficiente para permitir que uma pessoa passe.`,
+              );
+              ctx.openLocks["l01.behind-house.window"] = true;
+              ctx.score += 3;
+            },
+            cond: (ctx, { value }) => !ctx.openLocks["l01.behind-house.window"] && value == "window",
           },
         ],
       },

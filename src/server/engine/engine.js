@@ -416,7 +416,7 @@ const createEngine = (user) => {
       subject
         .asObservable()
         .pipe(
-          bufferTime(500),
+          bufferTime(1000),
           filter((buffer) => buffer.length > 0),
         )
         .subscribe((messages) => {

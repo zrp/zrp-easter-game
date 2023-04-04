@@ -30,9 +30,7 @@ const Messages = {
       prompt: `Oeste da casa\nVocê está parado em um campo aberto a oeste de uma casa branca, com a porta da frente fechada.\nHá uma pequena caixa de correio aqui.`,
       who: Characters.NARRATOR,
     },
-    mailboxOpen: {
-      prompt: "Ao abrir a caixa de correio uma nota é revelada.",
-    },
+    mailboxOpen: "Ao abrir a caixa de correio uma nota é revelada.",
   },
   northOfHouse: {
     entry: {
