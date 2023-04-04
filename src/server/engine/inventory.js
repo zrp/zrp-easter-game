@@ -26,6 +26,9 @@ const ITEM_IDS = {
   bunNotebook: "l03.diary",
   bunKey: "l03.key",
   bunKeyRuby: "l03.key.ruby",
+  battery: "l04.battery",
+  cuttingTool: "l04.cuttingTool",
+  coil: "l06.coil",
 };
 
 const mailboxNote = createItem("nota", ITEM_IDS.mailboxNote, {
@@ -39,6 +42,21 @@ const bunKeyRuby = createItem("rubi", ITEM_IDS.bunKeyRuby, {
   description: `Uma rubi, de vermelho profundo e brilho opaco. Ele ornava a chave que o Bun lhe entregou.`,
 });
 
+const battery = createItem("bateria", ITEM_IDS.battery, {
+  readable: false,
+  description: "Uma bateria de 12V convencional. Ela parece ser parte de um gerador elétrico.",
+});
+
+const cuttingTool = createItem("ferramenta de corte", ITEM_IDS.cuttingTool, {
+  readable: false,
+  description: "Uma ferramenta de corte. Ela parece ser útil para cortar metal e outros materiais rígidos.",
+});
+
+const coil = createItem("bobina de cristal", ITEM_IDS.coil, {
+  readable: false,
+  description: "Uma bobina de cristal mágica. De uso único. Pode ser usada para ligar o teletransportador do laboratório do Bun.",
+});
+
 const ITEMS = {
   mailboxNote: {
     id: ITEM_IDS.mailboxNote,
@@ -49,8 +67,20 @@ const ITEMS = {
     item: createItem("diário do Bun", ITEM_IDS.bunNotebook, {
       readable: true,
       description: `Um caderno estranho, ele parece um diário. Na capa você lê "Propriedade de Bun, O Coelho". Ela parece ser legível.`,
-      contents: `Diário do Bun\n---------------------------\nA senha do teletransportador jamais deve ser divulgada. Apenas os verdadeiros cidadãos de W'eb devem saber a resposta.\nJá sei, a senha será o nome da primeira pessoa a programar na história.\n- Bun`,
+      contents: `Diário do Bun\n---------------------------\nA senha do teletransportador jamais deve ser divulgada. Apenas os verdadeiros cidadãos de W'eb devem saber a resposta.\nAcreditava eu que a profecia seria cumprida, mas já não tenho mais esperanças. Desde os primórdios, eu venho esperando que essa pessoa apareça para nos salvar.\nAinda lembro quando acreditava que seria aquela, a primeira pessoa a programar.\nBom, de qualquer forma, seu nome é uma senha que apenas o escolhido saberia.\n- Bun`,
     }),
+  },
+  battery: {
+    id: ITEM_IDS.battery,
+    item: battery,
+  },
+  cuttingTool: {
+    id: ITEM_IDS.cuttingTool,
+    item: cuttingTool,
+  },
+  coil: {
+    id: ITEM_IDS.coil,
+    item: coil,
   },
   bunKey: {
     id: ITEM_IDS.bunKey,
@@ -97,6 +127,7 @@ const detachItem = (item) => {
 
 module.exports = {
   ITEMS,
+  ITEM_IDS,
   readItem,
   seeItem,
   detachItem,

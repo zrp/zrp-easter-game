@@ -82,7 +82,7 @@ export default function TypedText(props = { text: "", animate: false, interactiv
 
   const onWhoClick = who.id ? (e) => {
     e.preventDefault();
-    if (who) whoIs?.(who.id)
+    // if (who) whoIs?.(who.id)
   } : null;
 
 

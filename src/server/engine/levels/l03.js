@@ -1,6 +1,15 @@
 const { assign, raise } = require("xstate");
 
-const { addMessages, addSteps, addVisit, acceptedMission, setMessages, pen, pendingMissiondingMission, pendingMission } = require("../context");
+const {
+  addMessages,
+  addSteps,
+  addVisit,
+  acceptedMission,
+  setMessages,
+  pen,
+  pendingMissiondingMission,
+  pendingMission,
+} = require("../context");
 const { ITEMS } = require("../inventory");
 const { defaultActions, talk2npc } = require("../actions");
 
@@ -33,10 +42,17 @@ const l03 = {
             },
           ])(ctx),
         location: "Laboratório",
+        steps: addSteps,
       }),
       on: {
         ...defaultActions,
         goEast: "machine",
+        goSouth: {
+          target: "npc",
+          actions: (ctx) => {
+            ctx.messages.push({ prompt: "Você decide falar com o coelho (talvez seja uma boa ideia dizer oi)." });
+          },
+        },
         approve: {
           target: "npc",
           actions: (ctx) => {
@@ -51,7 +67,9 @@ const l03 = {
         speakTo: [
           {
             actions: assign({
-              messages: [{ prompt: `Você já falou com o coelho e aceitou a missão de recuperar a cesta de ovos. Quer falar novamente com ele?` }],
+              messages: [
+                { prompt: `Você já falou com o coelho e aceitou a missão de recuperar a cesta de ovos. Quer falar novamente com ele?` },
+              ],
             }),
             cond: (ctx) => ctx.missions["l03.retrieveBasketOfEggs"]?.accepted,
           },
@@ -82,7 +100,10 @@ const l03 = {
                 ctx.messages.push(Messages.actions.grab);
                 ctx.inventory.push(ITEMS.bunNotebook.item);
               },
-              assign({ items: (ctx) => _.merge(ctx.items, { [ITEMS.bunNotebook.id]: true }) }),
+              assign({
+                items: (ctx) => _.merge(ctx.items, { [ITEMS.bunNotebook.id]: true }),
+                score: (ctx) => ctx.score + 2,
+              }),
             ],
             cond: (ctx, event) => event.value == "diary" && !ctx.items[ITEMS.bunNotebook.id],
           },
@@ -153,10 +174,11 @@ const l03 = {
                     return "Obrigado por me ajudar, há algo mais que você precise saber?";
                   } else {
                     mission.accepted = true;
+                    context.score += 5;
                     return "Aaaah, muito obrigado! Então, eu estava me preparando para a páscoa e vim para esse mundo para distribuir os ovos para as crianças, mas quando cheguei no meu laboratório fui surpreendido por um ladrão. Ele roubou minha cesta e fugiu de volta para a nossa dimensão. Eu tentei ir atrás dele, mas eu escorreguei e não consegui.";
                   }
                 default:
-                  if (!mission.accepted) return `Eu só posso te falar o que ocorreu se você decidir me ajudar`;
+                  if (!mission.accepted) return `Eu só posso te falar o que ocorreu se você decidir me ajudar.`;
                   return false;
               }
             }),
@@ -182,6 +204,7 @@ const l03 = {
             },
           ])(ctx),
         location: "Laboratório / Máquina",
+        steps: addSteps,
       }),
       on: {
         ...defaultActions,
@@ -230,21 +253,27 @@ const l03 = {
               checkMissionAccepted,
               {
                 target: "#l04",
-                actions: assign({
-                  messages: [
-                    {
-                      prompt:
-                        "Você digita a senha correta!\nA máquina se abre e você visualiza um portal azul para outra dimensão. Antes que você pudesse se despedir, o portal te suga para dentro dele (...)",
-                    },
-                    {
-                      prompt: "Até logo! E boa sorte!",
-                      who: Characters.BUN,
-                    },
-                  ],
-                  openLocks: (ctx) => _.merge(ctx.openLocks, { "l03.machine": { open: true } }),
-                  inventory: (ctx) => [...ctx.inventory, ITEMS.bunKey.item],
-                }),
-                cond: (ctx, { value }) => value === "ada" && ctx.missions["l03.retrieveBasketOfEggs"].accepted && ctx.openLocks["l03.machine"]?.state == "on",
+                actions: (ctx) => {
+                  ctx.messages.push({
+                    prompt: "Antes que você se vá, leve essa chave, ela será útil.",
+                    who: Characters.BUN,
+                  });
+
+                  ctx.messages.push(
+                    "Você digita a senha correta!\nA máquina se abre e você visualiza um portal azul para outra dimensão. Antes que você pudesse se despedir, o portal te suga para dentro dele (...)",
+                  );
+
+                  ctx.messages.push({
+                    prompt: "Até logo! E boa sorte!",
+                    who: Characters.BUN,
+                  });
+
+                  ctx.score += 5;
+                  ctx.openLocks["l03.machine"].open = true;
+                  ctx.inventory.push(ITEMS.bunKey.item);
+                },
+                cond: (ctx, { value }) =>
+                  value === "ada" && ctx.missions["l03.retrieveBasketOfEggs"].accepted && ctx.openLocks["l03.machine"]?.state == "on",
               },
               {
                 actions: assign((ctx) => ({

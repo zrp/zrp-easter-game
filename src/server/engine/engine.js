@@ -10,16 +10,23 @@ const narrator = require("./models/narrator");
 const bun = require("./models/bun");
 
 const { Subject } = require("rxjs");
-const { distinctUntilChanged } = require("rxjs/operators");
+const { distinctUntilChanged, bufferTime, filter } = require("rxjs/operators");
 const Messages = require("./messages");
 
 const { addMessages, addSteps, addVisit, getTransitionName } = require("./context");
-const { ITEMS, seeItem, readItem, item2txt, detachItem } = require("./inventory");
+const { ITEMS, seeItem, readItem, item2txt, detachItem, ITEM_IDS } = require("./inventory");
 const { defaultActions } = require("./actions");
 
-const { l01, l02Attic, l02Tunnel, l02Boss, l03, l04, l05, l06 } = require("./levels");
+const { l01, l02Attic, l02Tunnel, l02Boss, l03, l04, l05, l06, l07 } = require("./levels");
+const moment = require("moment");
+
+moment.defineLocale("pt-br", {});
 
 const npcs = require("./npcs");
+
+const { IncomingWebhook } = require("@slack/webhook");
+
+const webhook = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL);
 
 const shortcuts = {
   I: (fsm) => {
@@ -72,17 +79,16 @@ const createEngine = (user) => {
   const initialContext = {
     steps: 0,
     score: 0,
-    name: "Pedro",
+    name: user?.name?.givenName,
     currentQuestion: null,
     questions: [],
+    questions2: [],
+    questions3: [],
     messages: [],
     visited: {},
     inventory: [],
     location: "",
-    items: {
-      [ITEMS.mailboxNote.id]: false,
-      [ITEMS.bunNotebook.id]: false,
-    },
+    items: _.reduce(Object.values(ITEM_IDS).map((id) => ({ [id]: false }))),
     objects: {
       "web.machine": {
         state: "off",
@@ -99,6 +105,13 @@ const createEngine = (user) => {
         open: false,
       },
     },
+    l04: {
+      powerRestored: false,
+      lockerOpen: false,
+    },
+    l06: {
+      hasCoil: false,
+    },
     openLocks: {
       "l01.behind-house.window": false,
       "l02-attic.entrance.door": {
@@ -114,6 +127,10 @@ const createEngine = (user) => {
         open: false,
         attemptsRemaining: 3,
       },
+      "l04.lights": "off",
+      "l04.energy-room": false,
+      "l04.generator": false,
+      "l04.generatorHasBattery": false,
     },
     missions: {
       "l03.retrieveBasketOfEggs": {
@@ -127,9 +144,10 @@ const createEngine = (user) => {
     predictableActionArguments: true,
     preserveActionOrder: true,
     id: "game",
-    context: _.clone(initialContext),
+    context: _.cloneDeep(initialContext),
     initial: "idle",
     on: {
+      ...defaultActions,
       lookAround: {
         target: "#game.hist",
       },
@@ -163,7 +181,9 @@ const createEngine = (user) => {
               ...ctx.messages,
               {
                 prompt: `Você ${
-                  ctx.steps == 0 ? "não deu nenhum passo." : `deu ${ctx.steps} passo${ctx.steps > 1 ? "s" : ""}. Seu score atual é ${ctx.score}.`
+                  ctx.steps == 0
+                    ? "não deu nenhum passo."
+                    : `deu ${ctx.steps} passo${ctx.steps > 1 ? "s" : ""}. Seu score atual é ${ctx.score}.`
                 }\nVocê se encontra no momento em: ${ctx.location}`,
               },
             ];
@@ -260,13 +280,66 @@ const createEngine = (user) => {
         },
       },
       "game-over": {
-        entry: (ctx) =>
-          (ctx = {
-            ...initialContext,
-            steps: ctx.steps,
-            messages: ["Como num passe de mágica, você se vê voltando no tempo, tudo lhe parece familiar, mas diferente. O que será que ocorreu?"],
+        entry: assign(
+          _.merge(_.cloneDeep(initialContext), {
+            messages: [
+              "Como num passe de mágica você se vê voltando no tempo, tudo lhe parece familiar, mas diferente. O que será que ocorreu!?",
+            ],
           }),
+        ),
         always: [{ target: "l01" }],
+      },
+      win: {
+        entry: async (ctx) => {
+          await webhook.send({
+            blocks: [
+              {
+                type: "header",
+                text: {
+                  type: "plain_text",
+                  text: "Acabaram de terminar o jogo de páscoa :partyparrot:",
+                  emoji: true,
+                },
+              },
+              {
+                type: "section",
+                text: {
+                  type: "plain_text",
+                  text: `O ${user?.name?.givenName} (${user?.emails?.[0]?.value}) acabou de terminar o jogo!\nVamos aos resultados:`,
+                  emoji: true,
+                },
+              },
+              {
+                type: "divider",
+              },
+              {
+                type: "section",
+                text: {
+                  type: "mrkdwn",
+                  text: `*Score:* ${ctx.score}`,
+                },
+              },
+              {
+                type: "section",
+                text: {
+                  type: "mrkdwn",
+                  text: `*Passos:* ${ctx.steps}`,
+                },
+              },
+              {
+                type: "divider",
+              },
+              {
+                type: "section",
+                text: {
+                  type: "plain_text",
+                  text: "Nossos parabéns pra você!\n\n:zrp:",
+                  emoji: true,
+                },
+              },
+            ],
+          });
+        },
       },
       l01,
       l02Attic,
@@ -275,6 +348,8 @@ const createEngine = (user) => {
       l03,
       l04,
       l05,
+      l06,
+      l07,
       hist: {
         type: "history",
         history: "shallow",
@@ -294,12 +369,13 @@ const createEngine = (user) => {
       l.debug(`FSM transitioned to ${JSON.stringify(state?.value)} due to ${state._event?.name} (${state._event?.type})`);
 
       location$.next(state?.context?.location);
-      const messages = _.reverse(state?.context?.messages ?? []);
+      const m = state?.context?.messages;
+      const messages = _.reverse(m ?? []);
 
       let message = messages.pop();
 
       while (!!message) {
-        const m = message.prompt ? message : { prompt: message };
+        const m = message?.prompt ? message : { prompt: message };
         subject.next(m);
         message = messages.pop();
       }
@@ -326,20 +402,27 @@ const createEngine = (user) => {
     },
     onLocationChange: (cb = null) => {
       location$.pipe(distinctUntilChanged()).subscribe((location) => {
-        l.debug(`Location changed to ${location}`);
+        if (location) l.debug(`Location changed to ${location}`);
         cb?.(location);
       });
     },
     onQuestion: (cb = null) => {
       question$.pipe(distinctUntilChanged()).subscribe((question) => {
-        l.debug(`question changed to`, question);
+        if (question) l.debug(`question changed to ${JSON.stringify(question, null, 2)}`);
         cb?.(question);
       });
     },
     onUpdate: (cb = null) => {
-      subject.subscribe((message) => {
-        cb?.(message);
-      });
+      subject
+        .asObservable()
+        .pipe(
+          bufferTime(500),
+          filter((buffer) => buffer.length > 0),
+        )
+        .subscribe((messages) => {
+          l.debug(`Buffered ${messages.length} messages`);
+          cb?.(messages);
+        });
     },
     onError: (cb = null) => {
       errorSubject.subscribe(async (error) => {
@@ -348,6 +431,14 @@ const createEngine = (user) => {
     },
     next: async (prompt) => {
       l.debug(`Engine received prompt: "${prompt}"`);
+
+      l.debug(`Sending user his own message back`);
+      subject.next({
+        interactive: false,
+        animate: false,
+        prompt,
+        who: Characters.PLAYER,
+      });
 
       // Try to capture shortcuts
       if (Object.keys(shortcuts).includes(prompt)) {

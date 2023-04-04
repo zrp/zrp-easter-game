@@ -27,6 +27,7 @@ module.exports = createModel(NARRATOR, (manager) => {
 
   // Locations
   manager.addNamedEntityText("location", "house", ["pt"], ["casa", "casa branca"]);
+  manager.addNamedEntityText("item", "ruins", ["pt"], ["ruínas", "excavação"]);
 
   // Items
   manager.addNamedEntityText("item", "note", ["pt"], ["nota", "leaflet"]);
@@ -42,10 +43,15 @@ module.exports = createModel(NARRATOR, (manager) => {
 
   // l04
   manager.addNamedEntityText("item", "board", ["pt"], ["lousa", "lousa imensa"]);
+  manager.addNamedEntityText("item", "battery", ["pt"], ["bateria"]);
+  manager.addNamedEntityText("item", "wall", ["pt"], ["parede"]);
   manager.addNamedEntityText("item", "rug", ["pt"], ["tapete"]);
+  manager.addNamedEntityText("item", "lights", ["pt"], ["luzes", "luz"]);
   manager.addNamedEntityText("item", "switch", ["pt"], ["interruptor", "alavanca"]);
-  manager.addNamedEntityText("item", "crowbar", ["pt"], ["pé de cabra", "pé-de-cabra", "crowbar"]);
+  manager.addNamedEntityText("item", "cuttingTool", ["pt"], ["ferramenta de corte", "cortador", "ferramenta"]);
   manager.addNamedEntityText("item", "coil", ["pt"], ["bobina", "bobina de cristal"]);
+  manager.addNamedEntityText("item", "generator", ["pt"], ["gerador"]);
+  manager.addNamedEntityText("item", "locker", ["pt"], ["armário"]);
 
   // Go direction
   manager.addDocument("pt", "ir para %direction%", "goDirection");
@@ -78,6 +84,14 @@ module.exports = createModel(NARRATOR, (manager) => {
   // Turn off
   manager.addDocument("pt", "desligar a %item%", "turnOff");
   manager.addDocument("pt", "desligar o %item%", "turnOff");
+
+  // Put
+  manager.addDocument("pt", "colocar o %item%", "putItem");
+  manager.addDocument("pt", "colocar a %item%", "putItem");
+  manager.addDocument("pt", "botar o %item%", "putItem");
+  manager.addDocument("pt", "botar a %item%", "putItem");
+  manager.addDocument("pt", "inserir o %item%", "putItem");
+  manager.addDocument("pt", "inserir a %item%", "putItem");
 
   // Enter location
   manager.addDocument("pt", "entrar na %location%", "enterLocation");
@@ -178,6 +192,9 @@ module.exports = createModel(NARRATOR, (manager) => {
   manager.addAnswer("pt", "hello", `E aí?!`);
   manager.addAnswer("pt", "hello", `Coé?!`);
   manager.addAnswer("pt", "hello", `Opa!`);
+  manager.addAnswer("pt", "hello", `Suave?`);
+  manager.addAnswer("pt", "hello", `Beleza?`);
+  manager.addAnswer("pt", "hello", `Eae!?`);
 
   // Questions for who is the narrator
   manager.addDocument("pt", "quem é você?", "whoAreYou");
@@ -186,8 +203,25 @@ module.exports = createModel(NARRATOR, (manager) => {
   manager.addAnswer(
     "pt",
     `whoAreYou`,
-    "Na minha língua nativa:\n\"Teen le jach sáasil yéetel oochel, éter yéetel yo'olal, Tene' u ts'o'okol tuláakal yéetel le principio tuláakal, Tene' narrador le k'ajláayo', ka teech le jugador, teech ti' leti'\"",
+    'Na sua língua nativa:\n"Eu sou o éter e o tempo, sou o espaço e o momento. Eu sou aquilo que você não vê, aquilo que movimenta o ser. Eu sou o que você gostaria de ter. Eu sou você."\nEu estou aqui para te ajudar a realizar a profecia. Nada mais, nada menos.',
   );
 
-  manager.addAnswer("pt", `help`, "");
+  manager.addAnswer(
+    "pt",
+    `help`,
+    "Esse é um jogo iterativo. Seu objetivo é digitar comandos para o jogo, se movimentar e explorar os diversos desafios, e encontrar o segredo. Para se movimentar, digite N, S, L ou O (as outras direções também são válidas).",
+  );
+
+  manager.addAnswer(
+    "pt",
+    `help`,
+    "Se você nunca jogou um jogo nesse estilo, eu recomendo que você dê uma olhadinha em ZORK. A ideia é a mesma.",
+  );
+
+  manager.addAnswer("pt", `help`, "Já tentou ver um item? Você pode ver os itens que está carregando, ou abrir o inventário.");
+  manager.addAnswer(
+    "pt",
+    `help`,
+    "Nesse jogo, para cada movimento, um passo será contabilizado (isso só inclui você trocar de sala / lugar). Conforme você resolve os desafios, você ganha pontos, que se somam e definem o seu score.",
+  );
 });

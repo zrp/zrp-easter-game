@@ -5,7 +5,8 @@ import Modal from './components/Modal';
 import SideView from './components/SideView';
 
 // UI
-// import uiSound from './assets/sounds/ui/wind1.wav';
+import uiSound from './assets/sounds/wind.wav';
+import ui2Sound from './assets/sounds/UI1.wav';
 import alertSvg from './assets/icons/alert.svg';
 import zrpSvg from './assets/icons/zrp.svg';
 import compass from './assets/icons/compass.png';
@@ -32,6 +33,11 @@ function resizeObserver(...elements) {
 
     return () => resizeObserver.disconnect();
   });
+}
+
+const sounds = {
+  ambient: new Audio(uiSound),
+  button: new Audio(ui2Sound),
 }
 
 
@@ -179,6 +185,13 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
     scrollToBottom();
   }
 
+  const playSound = (name) => {
+    // switch (name) {
+    // default:
+    // sounds.button.play();
+    // }
+  }
+
   // Initial effects
   useEffect(() => {
     const cancelConnect = socket.onConnect(() => setIsConnected(true));
@@ -200,7 +213,6 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
     });
 
     const cancelLoadingEffect = loadingEffect();
-
 
     return () => {
       cancelConnect();
@@ -254,22 +266,22 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
   }, [shortcut, modalOpen, sideViewOpen])
 
 
-  // Game response effects
   useEffect(() => {
-    const cancelGameEvent = socket.onGameEvent((add) => {
-      console.log(`Buffer:`, add);
-      let nextWorld = [...worldQueue, ...add];
+    const cb = (add) => {
+      const nextWorld = [...worldQueue, ...add].map((el) => {
+        el.afterRender = (() => {
+          setRendering(false);
+          promptInputRef?.current?.focus();
+        });
 
-      nextWorld = add.map((v, index) => {
-        v.afterRender = () => {
-          setWorldQueue(nextWorld.slice(index + 1));
-        };
-        return v;
+        return el;
       });
 
       setWorldQueue(nextWorld);
       scrollToBottom();
-    })
+    };
+
+    const cancelGameEvent = socket.onGameEvent(cb);
 
     return () => {
       cancelGameEvent();
@@ -289,47 +301,33 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
     }
   }, [error])
 
-  useLayoutEffect(() => {
-    const addToWorld = (next, afterRender) => {
-      const newWorld = [...world, {
-        ...next, afterRender,
-      }];
-
-      setWorld(newWorld);
-      scrollToBottom();
-    };
-
-    scrollToBottom(false);
-    promptInputRef?.current?.focus();
-
-    if (worldQueue.length == 0 || rendering) {
+  // Extract from worldQueue and add to world
+  useEffect(() => {
+    if (rendering) {
       return;
     };
 
     setRendering(true);
 
-    const [next, ...nextWorldQueue] = worldQueue;
+    const [next, ...queue] = worldQueue;
 
-    setWorldQueue(nextWorldQueue);
-
-    addToWorld(next, () => {
+    if (!next) {
       setRendering(false);
-    })
+      promptInputRef?.current?.focus();
+      return;
+    };
 
+    setWorldQueue(queue);
 
-    return () => {
-    }
+    const add2world = (next) => {
+      setWorld([...world, next]);
+      scrollToBottom();
+    };
+
+    add2world(next);
   }, [world, worldQueue, rendering])
 
-  // useEffect(() => {
-  //   if (!uiSoundRef.current) retur     n;
-
-  //   uiSoundRef.current.play();
-
-  // }, [uiSoundRef])
-
   return <>
-    {/* <audio src={uiSound} ref={uiSoundRef}></audio> */}
     <div className="text-xl w-full h-full relative font-mono mx-auto">
       <div id="game" className='w-full h-100 flex flex-col min-h-full top-0 left-0 text-white bg-gray-900'>
         <nav className='text-base  sticky top-0 z-50 bg-gray-900'>
@@ -338,7 +336,7 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
               <img src={zrpSvg} className='h-full w-full p-3'></img>
             </div>
             <div className="flex h-full ml-auto">
-              <button onClick={() => handleShortcut('Z')} className='relative px-3 my-2 mx-2 flex text-center bg-black rounded-xl  items-center justify-center hover:bg-orange-400 hover:text-black'>
+              <button onMouseEnter={playSound('button')} onClick={() => handleShortcut('Z')} className='relative px-3 my-2 mx-2 flex text-center bg-black rounded-xl  items-center justify-center hover:bg-orange-400 hover:text-black'>
                 <div className='relative flex items-center justify-center'>
                   <span className='z-10 relative'>ZRP</span>
                   <span className="text-xs px-2 py-1 mx-2 hidden md:flex rounded-xl bg-black text-white tracking-tighter">Ctrl + Z</span>
@@ -346,7 +344,7 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
                 </div>
               </button>
 
-              <button onClick={() => handleShortcut(',')} className='px-3 my-2 mx-2 flex text-center bg-black rounded-xl  items-center justify-center hover:bg-gray-300 hover:text-black'>
+              <button onMouseEnter={playSound('button')} onClick={() => handleShortcut(',')} className='px-3 my-2 mx-2 flex text-center bg-black rounded-xl  items-center justify-center hover:bg-gray-300 hover:text-black'>
                 Configurações <span className="text-xs px-2 py-1 mx-2 hidden md:flex rounded-xl bg-black text-white tracking-tighter">Ctrl + ,</span>
               </button>
             </div>
@@ -356,10 +354,10 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
           <nav className='w-full text-base h-8 flex border-b border-gray-700 items-center justify-between bg-gray-900'>
             <span className='ml-4 text-base font-medium font-mono text-gray-400'>{location}</span>
             <div className="flex h-full ml-auto">
-              <button onClick={() => handleShortcut('I')} className='px-3 h-full flex text-center border-l border-l-gray-700 items-center justify-center hover:bg-pink-400 hover:text-black'>
+              <button onMouseEnter={playSound('button')} onClick={() => handleShortcut('I')} className='px-3 h-full flex text-center border-l border-l-gray-700 items-center justify-center hover:bg-pink-400 hover:text-black'>
                 Inventário <span className="text-xs px-2 py-1 mx-2 hidden md:flex rounded-xl bg-black text-white tracking-tighter">Ctrl + I</span>
               </button>
-              <button onClick={() => handleShortcut('P')} className='px-3 h-full flex text-center border-l border-l-gray-700 items-center justify-center hover:bg-yellow-400 hover:text-black'>
+              <button onMouseEnter={playSound('button')} onClick={() => handleShortcut('P')} className='px-3 h-full flex text-center border-l border-l-gray-700 items-center justify-center hover:bg-yellow-400 hover:text-black'>
                 Progresso <span className="text-xs px-2 py-1 mx-2 hidden md:flex rounded-xl bg-black text-white tracking-tighter">Ctrl + P</span>
               </button>
             </div>
@@ -369,7 +367,7 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
         {showWindRoses ? <img src={compass} className='w-32 h-32 fixed right-8 top-24 z-50 invert' /> : <></>}
 
 
-        <div id="terminal" ref={terminalRef} className='p-4 min-h-full flex-grow relative cursor-pointer' onClick={() => promptInputRef?.current?.focus()} disabled={question}>
+        <div id="terminal" ref={terminalRef} className='p-4 min-h-full flex-grow relative cursor-pointer' onClick={() => promptInputRef?.current?.focus()} disabled={question || rendering}>
           {world.map((prompt, index) => {
             if (!prompt) return;
 
@@ -394,10 +392,10 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
               <h1 className="text-xl mb-4">{question.question}</h1>
               <ul>
                 {question.options.map((option) => {
-                  return <li class="w-full border-gray-200 rounded-t-lg dark:border-gray-600">
+                  return <li key={option} class="w-full border-gray-200 rounded-t-lg dark:border-gray-600">
                     <div class="flex items-center ml-1">
                       <input type="checkbox" value={option} checked={answer == option} onChange={(e) => setAnswer(e.target.value)} name="answer" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 " />
-                      <label for="vue-checkbox" class="w-full py-3 ml-3 text-lg font-medium text-gray-200">{option}</label>
+                      <label class="w-full py-3 ml-3 text-lg font-medium text-gray-200">{option}</label>
                     </div>
                   </li>
                 })}

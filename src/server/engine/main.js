@@ -60,7 +60,7 @@ const attachHandler = async (io, client, { id: userId }, sessionId) => {
     io.to(sessionId).emit("game:progress-change", { steps, score });
   });
 
-  client.on("game:challenge-response", async ({ answer }, cb) => {
+  client.on("game:challenge-response", ({ answer }, cb) => {
     if (cb) cb("SYN_SERVER");
 
     const fsm = engine._fsm;
@@ -72,7 +72,7 @@ const attachHandler = async (io, client, { id: userId }, sessionId) => {
   client.on("prompt", async ({ prompt }, cb) => {
     l.debug(`Called prompt on server`);
 
-    if (cb) cb("SYN_SERVER");
+    if (cb) cb("SYN_SERVER_PROMPT");
 
     // Check for cooldown
     const isCooldown = await isCooldownActive(user, "prompt");
@@ -84,14 +84,6 @@ const attachHandler = async (io, client, { id: userId }, sessionId) => {
     }
 
     await setCooldown(user, "prompt", 1);
-
-    l.debug(`Sending user his own message back`);
-    add2world({
-      interactive: false,
-      animate: false,
-      prompt,
-      who: PLAYER,
-    });
 
     await engine.next(prompt);
   });

@@ -30,6 +30,9 @@ const l02Attic = {
       on: {
         ...defaultActions,
         goEast: "at-door",
+        goUp: {
+          actions: (ctx) => ctx.messages.push("Você tenta subir, mas o alçapão está trancados."),
+        },
         openItem: {
           target: "at-door",
           cond: (_, ev) => ev?.value === "door",
@@ -59,6 +62,7 @@ const l02Attic = {
                     'Você digita sua senha. O monitor exibe: "Senha correta!"\nA porta começa a se abrir, mas o painel parece enlouquecer e com uma intensidade alarmante ele começa a pedir novas senhas para você.',
                 },
               ],
+              score: (ctx) => ctx.score + ctx.openLocks["l02-attic.entrance.door"]?.attemptsRemaining,
               openLocks: (ctx) => _.merge(ctx.openLocks, { "l02-attic.entrance.door": { open: true } }),
             }),
             cond: (context, { value }) => value === "rails",
@@ -110,16 +114,31 @@ const l02Tunnel = {
       entry: assign({
         messages: addMessages([
           {
-            prompt: `Túnel\nVocê tropeça no caminho, rolando pela encosta do desfiladeiro. O chão irregular e coberto de folhas esconde um buraco que se abre com o impacto, te sugando para dentro da terra.\nVocê bate em algumas pedras no meio do caminho, mas finalmente chega ao que parece ser a entrada de um túnel velho, iluminado apenas pela fraca luz que passa pelo buraco acima e pela fresta de uma porta à oeste.`,
+            prompt: `Base do Desfiladeiro\nVocê desce a encosta, mas ela é muito ingreme. Você perde o equilíbrio, e começa a rolar morro abaixo. Você chega à base do desfiladeiro. À oeste, você vê uma porta, ela parece ser protegida por uma senha. Você parece ver o que são ruínas de uma antiga escavação ao seu lado.`,
           },
         ]),
-        location: "Túnel",
+        location: "Base do Desfiladeiro",
         visited: addVisit("l02.tunnel-entrance"),
         steps: addSteps,
       }),
       on: {
         ...defaultActions,
         goWest: "at-door",
+        seeItem: [
+          {
+            actions: (ctx) =>
+              ctx.messages.push(
+                `Você vê nas ruínas uma pedra grande. Nela está escrito:\nIV.IV.MMXXIII\n-------------------\nA profecia\nJá não se sabe aonde estão os antigos moradores daquela casa, não deixaram nem um mapa. Ela parece ter sido abandonada às pressas. Dizem, eles, terem tomado conhecimento de uma profecia. Uma profecia terrível.`,
+              ),
+            cond: (ctx, { value }) => value == "ruins",
+          },
+        ],
+        grabItem: {
+          actions: (ctx) => ctx.messages.push("A pedra é muito grande para ser retirada."),
+        },
+        goUp: {
+          actions: (ctx) => ctx.messages.push("Você não consegue subir a encosta, ela é muito ingrime."),
+        },
         openItem: {
           target: "open-door",
           cond: (_, ev) => ev?.value === "door",
@@ -147,7 +166,7 @@ const l02Tunnel = {
           },
         ]),
         steps: addSteps,
-        location: "Túnel / Porta",
+        location: "Base do Desfiladeiro / Porta",
       }),
       on: {
         ...defaultActions,
@@ -171,6 +190,7 @@ const l02Tunnel = {
                     'Você digita a senha "Mapa". O monitor exibe: "Senha correta!".\nA porta começa a se abrir, mas o painel parece enlouquecer e com uma intensidade alarmante ele começa a pedir novas senhas para você.',
                 },
               ],
+              score: (ctx) => ctx.score + ctx.openLocks["l02-tunnel.entrance.door"]?.attemptsRemaining,
               openLocks: (ctx) => _.merge(ctx.openLocks, { "l02-tunnel.entrance.door": { open: true } }),
             }),
             cond: (context, { value }) => value === "map",
@@ -229,20 +249,15 @@ const l02Boss = {
       on: {
         testAnswer: [
           {
-            target: "battle",
+            target: "#l03",
             actions: (ctx, event) => {
               if (ctx.currentQuestion.answer === event.answer) {
-                ctx.messages.push(`A máquina responde:\nR̶e̵s̶p̸o̷s̴t̵a̷ ̵c̸o̵r̴r̴e̶t̸a̸`);
-                ctx.score += 10;
+                ctx.messages.push(`O painel responde: R̶e̵s̶p̸o̷s̴t̵a̷ ̵c̸o̵r̴r̴e̶t̸a̸`);
+                ctx.score += 8;
               } else {
-                ctx.messages.push(`A máquina responde:\nR̵e̴s̵p̴o̷s̸t̷a̵ ̸i̵n̸c̶o̶r̸r̵e̵t̸a̵,̶ ̸t̴e̶n̵t̴e̵ ̴n̵o̸v̴a̶m̴e̴n̶t̷e̷!̷`);
+                ctx.messages.push(`O painel responde: R̵e̴s̵p̴o̷s̸t̷a̵ ̸i̵n̸c̶o̶r̸r̵e̵t̸a̵,̶ ̸t̴e̶n̵t̴e̵ ̴n̵o̸v̴a̶m̴e̴n̶t̷e̷!̷`);
               }
-            },
-            cond: (ctx) => ctx.questions.length < 5,
-          },
-          {
-            target: "#l03",
-            actions: (ctx) => {
+
               ctx.currentQuestion = null;
               ctx.messages.push("De alguma forma mágica a porta aceita suas respostas e cede, dando passagem para você.");
             },
@@ -250,12 +265,30 @@ const l02Boss = {
           },
           {
             target: "gg",
-            actions: (ctx) => {
+            actions: (ctx, event) => {
+              if (ctx.currentQuestion.answer === event.answer) {
+                ctx.messages.push(`O painel responde: R̶e̵s̶p̸o̷s̴t̵a̷ ̵c̸o̵r̴r̴e̶t̸a̸`);
+                ctx.score += 8;
+              } else {
+                ctx.messages.push(`O painel responde: R̵e̴s̵p̴o̷s̸t̷a̵ ̸i̵n̸c̶o̶r̸r̵e̵t̸a̵,̶ ̸t̴e̶n̵t̴e̵ ̴n̵o̸v̴a̶m̴e̴n̶t̷e̷!̷`);
+              }
+
               ctx.messages.push(
                 "A porta começa a fazer um barulho intenso, aparentemente ela não ficou satisfeita com as suas respostas. Você ouve um barulho de 'tick' vindo dela. É melhor correr.\ntick\ntick\ntick\nbooooooooom!",
               );
             },
             cond: (ctx) => ctx.questions.length >= 5 && ctx.score < 30,
+          },
+          {
+            target: "battle",
+            actions: (ctx, event) => {
+              if (ctx.currentQuestion.answer === event.answer) {
+                ctx.messages.push(`O painel responde: R̶e̵s̶p̸o̷s̴t̵a̷ ̵c̸o̵r̴r̴e̶t̸a̸`);
+                ctx.score += 8;
+              } else {
+                ctx.messages.push(`O painel responde: R̵e̴s̵p̴o̷s̸t̷a̵ ̸i̵n̸c̶o̶r̸r̵e̵t̸a̵,̶ ̸t̴e̶n̵t̴e̵ ̴n̵o̸v̴a̶m̴e̴n̶t̷e̷!̷`);
+              }
+            },
           },
         ],
       },

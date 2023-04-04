@@ -10,46 +10,71 @@ const Messages = require("../messages");
 const Characters = require("../characters");
 const l = require("../../logger");
 
+const { getRandomQuestion } = require("../questions");
+
 const l05 = {
   id: "l05",
-  initial: "stairs",
+  initial: "idle",
   states: {
-    stairs: {
-      entry: assign({
-        messages: ["Ao descer as escadas, você dá de cara "],
-      }),
-      on: {
-        ...defaultActions,
-        goEast: "stairs-east",
-        goSouthEast: "stairs-southeast",
-        goSouth: "stairs-south",
+    idle: {
+      after: {
+        5000: "battle",
       },
     },
-    "stairs-east": {
-      entry: assign({
-        messages: ["Leste"],
-      }),
-      on: {
-        ...defaultActions,
-        goWest: "stairs",
+    gg: {
+      after: {
+        2000: "#game.game-over",
       },
     },
-    "stairs-southeast": {
-      entry: assign({
-        messages: ["Sudeste"],
-      }),
-      on: {
-        ...defaultActions,
-        goNorthWest: "stairs",
+    battle: {
+      entry: (ctx) => {
+        ctx.currentQuestion = getRandomQuestion([...ctx.questions, ...ctx.questions2]);
+        ctx.questions.push(ctx.currentQuestion.id);
+        ctx.questions2.push(ctx.currentQuestion.id);
       },
-    },
-    "stairs-south": {
-      entry: assign({
-        messages: ["Sul"],
-      }),
       on: {
-        ...defaultActions,
-        goNorth: "stairs",
+        testAnswer: [
+          {
+            target: "#l06",
+            actions: (ctx, event) => {
+              if (ctx.currentQuestion.answer === event.answer) {
+                ctx.messages.push({ prompt: "Correto!", who: Characters.BUN });
+                ctx.score += 9;
+              } else {
+                ctx.messages.push({ prompt: "Errrrrrrou!", who: Characters.BUN });
+              }
+
+              ctx.currentQuestion = null;
+              ctx.messages.push({ prompt: "Mas ok, você me provou conhecer o bastante! Eu confio em você.", who: Characters.BUN });
+            },
+            cond: (ctx) => ctx.questions2.length >= 5 && ctx.score >= 90,
+          },
+          {
+            target: "gg",
+            actions: (ctx, event) => {
+              if (ctx.currentQuestion.answer === event.answer) {
+                ctx.messages.push({ prompt: "Correto!", who: Characters.BUN });
+                ctx.score += 9;
+              } else {
+                ctx.messages.push({ prompt: "Errrrrrrou!", who: Characters.BUN });
+              }
+
+              ctx.messages.push({ prompt: "Com esses resultados eu não posso confiar em você!", who: Characters.BUN });
+            },
+            cond: (ctx) => ctx.questions2.length >= 5 && ctx.score < 90,
+          },
+          {
+            target: "battle",
+            actions: (ctx, event) => {
+              if (ctx.currentQuestion.answer === event.answer) {
+                ctx.messages.push({ prompt: "Correto!", who: Characters.BUN });
+                ctx.score += 9;
+              } else {
+                ctx.messages.push({ prompt: "Errrrrrrou!", who: Characters.BUN });
+              }
+            },
+          },
+        ],
       },
     },
   },

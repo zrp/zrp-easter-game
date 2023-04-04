@@ -61,10 +61,14 @@ const l01 = {
                 target: "idle",
                 actions: [
                   (ctx) => {
+                    ctx.score += 1;
                     ctx.messages.push(Messages.actions.grab);
                     ctx.inventory.push(ITEMS.mailboxNote.item);
                   },
-                  assign({ items: (ctx) => _.merge(ctx.items, { [ITEMS.mailboxNote.id]: true }) }),
+                  assign({
+                    items: (ctx) => _.merge(ctx.items, { [ITEMS.mailboxNote.id]: true }),
+                    score: (ctx) => ctx.score + 1,
+                  }),
                 ],
                 cond: (ctx, event) => event.value == "note" && !ctx.items[ITEMS.mailboxNote.id],
               },
@@ -133,7 +137,9 @@ const l01 = {
         openItem: [
           {
             actions: assign({
-              messages: [{ prompt: `Você fez um tremendo esforço, mas conseguiu abrir a janela o suficiente para permitir que uma pessoa passe.` }],
+              messages: [
+                { prompt: `Você fez um tremendo esforço, mas conseguiu abrir a janela o suficiente para permitir que uma pessoa passe.` },
+              ],
               openLocks: (ctx) => _.merge(ctx.openLocks, { "l01.behind-house.window": true }),
               score: (ctx) => ctx.score + 3,
             }),

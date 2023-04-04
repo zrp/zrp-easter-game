@@ -1,8 +1,9 @@
 import io from "socket.io-client";
 import { of, fromEvent, from, throwError } from "rxjs";
 import { bufferTime, filter, switchMap, tap, map, buffer } from "rxjs/operators";
+import _ from "lodash";
 
-const socket = io();
+const socket = io({ ackTimeout: 30000, autoConnect: true, reconnectionDelay: 5000, timeout: 15000, retries: 10 });
 
 const INCOMING = {
   connect: "connect",
@@ -52,18 +53,27 @@ const onUsersUpdated = (cb = null) => {
   return () => socket.off(INCOMING.usersUpdated, handler);
 };
 
-const onGameEvent = (cb = null) => {
+const onGameEvent = (cb = () => { }) => {
   const sub$ = of(socket)
     .pipe(
       switchMap((socket) => fromEvent(socket, "game:response")),
       switchMap(([data, callback]) => {
-        callback("ACK");
+        callback("ACK_GAME_RESPONSE");
 
-        return of(data.worldAdd);
+        console.log(`Received data`, data);
+
+        if (_.isArray(data)) {
+          return of(...data.map(d => d.worldAdd))
+        } else {
+          return of(data?.worldAdd);
+        }
       }),
+      bufferTime(500),
+      filter(d => d.length > 0),
     )
-    .subscribe(async (add) => {
-      await cb?.([add]);
+    .subscribe((data) => {
+
+      cb?.(data);
     });
 
   return () => {
@@ -76,7 +86,7 @@ const onGameError = (cb = null) => {
     .pipe(
       switchMap(socket => fromEvent(socket, 'game:error')),
       switchMap(([data, callback]) => {
-        callback("ACK");
+        callback("ACK_GAME_ERROR");
 
         return of(data.error);
       })
@@ -94,7 +104,7 @@ const onLocationChange = (cb = null) => {
     .pipe(
       switchMap((socket) => fromEvent(socket, "game:location-change")),
       switchMap(([data, callback]) => {
-        callback("ACK");
+        callback("ACK_LOCATION_CHANGE");
 
         return of(data);
       }),
@@ -115,7 +125,7 @@ const onChallenge = (cb = null) => {
     .pipe(
       switchMap((socket) => fromEvent(socket, "game:challenge")),
       switchMap(([data, callback]) => {
-        callback("ACK");
+        callback("ACK_CHALLENGE");
 
         return of(data);
       }),

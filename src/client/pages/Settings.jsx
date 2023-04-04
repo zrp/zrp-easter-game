@@ -5,7 +5,7 @@ import socket from '../services/socket';
 export default function Settings({ user }) {
   const [dense, setDense] = useLocalStorage("layout:dense", false);
   const [fontSizeSm, setFontSizeSm] = useLocalStorage("layout:font-sm", false);
-  const [typeSpeed, setTypeSpeed] = useLocalStorage('layout:typeSpeed', 30);
+  const [typeSpeed, setTypeSpeed] = useLocalStorage('layout:typeSpeed', 50);
 
   const [showWindRoses, setWindRoses] = useLocalStorage('layout:windRoses', false);
   const [confirm, setConfirm] = useState(false);
@@ -15,6 +15,12 @@ export default function Settings({ user }) {
     await socket.io.timeout(15000).emitWithAck('game:restart');
     setConfirm(false);
   }
+
+  useEffect(() => {
+    if (typeSpeed < 30) {
+      setTypeSpeed(30);
+    }
+  }, [typeSpeed]);
 
   useEffect(() => {
     let t;
@@ -61,7 +67,7 @@ export default function Settings({ user }) {
       <div className="relative flex- w-full items-center my-4">
         <label htmlFor="font-sm-checkbox" className="mb-2 text-base text-gray-100 dark:text-gray-300">Delay de escrita</label>
         <span className='text-xs text-gray-400 block'>É necessário recarregar o jogo para aplicar o novo delay de escrita</span>
-        <input id="default-range" type="range" min={10} max={150} value={typeSpeed} onChange={e => setTypeSpeed(parseInt(e.target.value, 10))} className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" />
+        <input id="default-range" type="range" min={30} max={200} value={typeSpeed} onChange={e => setTypeSpeed(parseInt(e.target.value, 10))} className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" />
         <span className='text-xs text-gray-500'>({typeSpeed}ms/letra)</span>
       </div>
       <h1 className="mt-8">Jogo</h1>

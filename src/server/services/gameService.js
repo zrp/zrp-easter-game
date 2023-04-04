@@ -4,8 +4,6 @@ const l = require("../logger");
 const { default: Queue } = require("queue");
 const Characters = require("../engine/characters");
 
-const queues = {};
-
 const ACK_TIMEOUT = 30000;
 
 const push = async (user, state) => {
@@ -51,54 +49,48 @@ async function setCooldown(user, action, ttl = 3) {
 }
 
 function getRenderer(io, sessionId, user) {
-  const renderer =
-    (eventName, data, save = true) =>
-    () =>
-      new Promise((resolve, reject) =>
-        io
-          .to(sessionId)
-          .timeout(ACK_TIMEOUT)
-          .emit(eventName, data, (err, response) => {
-            if (err) {
-              l.error(`Some clients did not ack the game:response in time`);
-              reject(err);
-              return;
-            }
+  const render = (eventName, data, save = true) =>
+    io
+      .to(sessionId)
+      .timeout(ACK_TIMEOUT)
+      .emit(eventName, data, (err, response) => {
+        if (err) {
+          l.error(`Some clients did not ack the game:response in time`);
+          return;
+        }
 
-            l.debug(`Received ack from client: ${response}`);
+        l.debug(`Received ack from client: ${response}`);
 
-            if (save && data?.worldAdd) {
-              push(user, data?.worldAdd).then(resolve);
-              return;
-            }
-
-            resolve();
-          }),
-      );
-
-  if (!queues[user.id]) {
-    queues[user.id] = {
-      error: new Queue({ concurrency: 1, autostart: true, results: [], timeout: ACK_TIMEOUT - 5000 }),
-      response: new Queue({ concurrency: 1, autostart: true, results: [], timeout: ACK_TIMEOUT - 5000 }),
-    };
-  }
+        if (save && data) {
+          if (_.isArray(data)) {
+            data.map((d) => push(user, d?.worldAdd));
+          } else {
+            push(user, data.worldAdd);
+          }
+          return;
+        }
+      });
 
   return {
     changeLocation: (location) => {
-      const queue = queues[user.id]?.response;
-      queue.push(renderer("game:location-change", location, false));
+      render("game:location-change", location, false);
     },
     sendChallenge: (question) => {
-      const queue = queues[user.id]?.response;
-      queue.push(renderer("game:challenge", question, false));
+      render("game:challenge", question, false);
     },
     add2world: (worldAdd, save = true) => {
-      const queue = queues[user.id]?.response;
-      queue.push(renderer("game:response", { worldAdd: { interactive: true, animate: true, who: Characters.NARRATOR, ...worldAdd } }, save));
+      if (_.isArray(worldAdd)) {
+        render(
+          "game:response",
+          worldAdd.map((data) => ({ worldAdd: { interactive: true, animate: true, who: Characters.NARRATOR, ...data } })),
+          save,
+        );
+      } else {
+        render("game:response", { worldAdd: { interactive: true, animate: true, who: Characters.NARRATOR, ...worldAdd } }, save);
+      }
     },
     setError: (error) => {
-      const queue = queues[user.id]?.error;
-      queue.push(renderer("game:error", { error }, false));
+      render("game:error", { error }, false);
     },
   };
 }

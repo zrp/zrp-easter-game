@@ -63,9 +63,9 @@ module.exports = createModel(
     manager.addDocument("pt", "no", "refuse");
 
     // tail
-    manager.addDocument("pt", "rabo", "aboutTail");
-    manager.addDocument("pt", "que rabo?", "aboutTail");
-    manager.addDocument("pt", "como era o rabo?", "aboutTail");
+    manager.addDocument("pt", "cabo", "aboutTail");
+    manager.addDocument("pt", "que cabo?", "aboutTail");
+    manager.addDocument("pt", "como era o cabo?", "aboutTail");
 
     // curse
     manager.addDocument("pt", "vai se fuder", "curse");
@@ -87,6 +87,7 @@ module.exports = createModel(
     // accept mission
     manager.addDocument("pt", "claro", "acceptMission");
     manager.addDocument("pt", "é pra já", "acceptMission");
+    manager.addDocument("pt", "eu te ajudo", "acceptMission");
     manager.addDocument("pt", "sim", "acceptMission");
     manager.addDocument("pt", "bora", "acceptMission");
     manager.addDocument("pt", "posso", "acceptMission");
@@ -186,13 +187,17 @@ module.exports = createModel(
     manager.addAnswer(
       "pt",
       "monsterFace",
-      "Eu não vi o seu rosto, mas ele era grande e usava uma capa preta. A única coisa que me lembro foi de ver seu rabo longo desaparecendo pelo portal.",
+      "Eu não vi o seu rosto, mas ele era grande e usava uma capa preta. A única coisa que me lembro foi de ver um cabo metálico desaparecendo pelo portal.",
     );
     manager.addAnswer("pt", "complaining", `Não se irrite! Eu posso te ajudar. O que você quer saber?`);
 
-    manager.addAnswer("pt", "aboutTail", `Era um rabo longo com fios pretos na ponta, mas como te disse, não vi muita coisa, posso estar enganado.`);
+    manager.addAnswer("pt", "aboutTail", `Era um cabo longo e metálico, mas como te disse, não vi muita coisa, posso estar enganado.`);
 
-    manager.addAnswer("pt", "niceToMeetYou", `O prazer é meu! É sempre bom conhecer pessoas dispostas a me ajudarem! Algo mais em que eu possa ajudá-lo?`);
+    manager.addAnswer(
+      "pt",
+      "niceToMeetYou",
+      `O prazer é meu! É sempre bom conhecer pessoas dispostas a me ajudarem! Algo mais em que eu possa ajudá-lo?`,
+    );
 
     manager.addAnswer("pt", "refuse", "Aaaah, tudo bem, outros provavelmente terão interesse em me ajudar.");
     manager.addAnswer("pt", "curse", "Você me xingar não vai te ajudar em nada.");
