@@ -246,14 +246,16 @@ const createEngine = (user) => {
           const found = ctx.inventory[index];
 
           if (!found.inside) {
-            ctx.messages.push({ prompt: "Já removido." });
+            ctx.messages.push("Já removido.");
           }
 
           const { message, inside, newItem } = detachItem(found);
 
-          ctx.inventory[index] = newItem;
-          ctx.inventory.push(inside);
-          ctx.messages.push({ prompt: message });
+          if (newItem) {
+            ctx.inventory[index] = newItem;
+            ctx.inventory.push(inside);
+            if (message && typeof message == "string") ctx.messages.push({ prompt: message });
+          }
         },
       },
     },

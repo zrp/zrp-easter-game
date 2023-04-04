@@ -121,7 +121,7 @@ const detachItem = (item) => {
     newItem.inside = null;
     return { inside, message: item.detachMessage, newItem };
   } else {
-    return `Não há nada para remover deste item.`;
+    return { message: `Não há nada para remover deste item.`, inside: null, newItem: null };
   }
 };
 

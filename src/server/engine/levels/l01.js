@@ -66,7 +66,7 @@ const l01 = {
                 target: "idle",
                 actions: [
                   (ctx) => {
-                    ctx.messages.push({ prompt: "Você já pegou a nota." });
+                    ctx.messages.push("Você já pegou a nota.");
                   },
                 ],
                 cond: (ctx, event) => event.value == "note" && ctx.items[ITEMS.mailboxNote.id],
