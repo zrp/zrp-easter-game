@@ -32,7 +32,7 @@ module.exports = createModel(NARRATOR, (manager) => {
   // Items
   manager.addNamedEntityText("item", "note", ["pt"], ["nota", "leaflet"]);
   manager.addNamedEntityText("item", "diary", ["pt"], ["diário", "caderno do bun", "caderno do coelho", "diário do coelho"]);
-  manager.addNamedEntityText("item", "table", ["pt"], ["mesa", "escrivaninha"]);
+  manager.addNamedEntityText("item", "table", ["pt"], ["mesa", "escrivaninha", "papéis"]);
   manager.addNamedEntityText("item", "mailbox", ["pt"], ["caixa de correio", "correio", "caixa"]);
   manager.addNamedEntityText("item", "machine", ["pt"], ["máquina", "teletransportador"]);
   manager.addNamedEntityText("item", "window", ["pt"], ["janela", "janela entreaberta"]);
@@ -129,6 +129,8 @@ module.exports = createModel(NARRATOR, (manager) => {
   manager.addDocument("pt", "yes", "approve");
   manager.addDocument("pt", "claro", "approve");
   manager.addDocument("pt", "mas é claro", "approve");
+  manager.addDocument("pt", "nasci pronto", "approve");
+  manager.addDocument("pt", "pronto", "approve");
 
   // Reject
   manager.addDocument("pt", "refuse", "refuse");

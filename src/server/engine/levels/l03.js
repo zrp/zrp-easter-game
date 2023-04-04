@@ -83,10 +83,8 @@ const l03 = {
         ],
         seeItem: [
           {
-            actions: assign({
-              messages: [{ prompt: "Você vê uma mesa extremamente bagunçada. Você vê um diário que parece ser do coelho." }],
-            }),
-            cond: (_, { value }) => value === "table",
+            actions: (ctx) => ctx.messages.push("Você vê uma mesa extremamente bagunçada. Você vê um diário que parece ser do coelho."),
+            cond: (_, { value }) => value == "table",
           },
           {
             target: "machine",
