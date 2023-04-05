@@ -28,6 +28,18 @@ const TURN_OFF_MESSAGES = [
   "O que? Desligar o que exatamente?!",
 ];
 
+const PULL_MESSAGES = [];
+
+const PUSH_MESSAGES = [];
+
+const PUT_ITEM_MESSAGES = [];
+
+const TYPE_MESSAGES = [];
+
+const ENTER_LOCATION_MESSAGES = [];
+
+const SPEAK_TO_MESSAGES = [];
+
 const defaultActions = {
   goDown: {
     actions: setMessages(Messages.errors.goDirection),

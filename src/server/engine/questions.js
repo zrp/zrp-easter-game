@@ -68,8 +68,8 @@ const questions = [
   {
     id: 8,
     question: "Qual dos seguintes data types do Javascript não é primitivo?",
-    answer: "Number",
-    options: ["Object", "Number", "Null", "Boolean"],
+    answer: "object",
+    options: ["object", "number", "null", "boolean"],
     topic: "Frontend",
     difficulty: "medium",
   },
@@ -295,6 +295,144 @@ const questions = [
     ],
     topic: "Programação Orientada a Objetos",
     difficulty: "medium",
+  },
+  {
+    id: 33,
+    question: "Qual é o objetivo do teorema CAP em sistemas distribuídos?",
+    answer:
+      "Mostrar que é impossível para um sistema distribuído fornecer simultaneamente consistência, disponibilidade e tolerância a partições em caso de falhas de rede",
+    options: [
+      "Definir o protocolo para sincronização de relógios em sistemas distribuídos",
+      "Garantir que todos os nós em um sistema distribuído tenham a mesma versão do software instalado",
+      "Fornecer um método para escalar um sistema distribuído sem perda de desempenho",
+      "Mostrar que é impossível para um sistema distribuído fornecer simultaneamente consistência, disponibilidade e tolerância a partições em caso de falhas de rede",
+    ],
+    topic: "Sistemas Distribuídos",
+    difficulty: "hard",
+  },
+  {
+    id: 34,
+    question: "O que é o teorema de Rice em teoria da computação?",
+    answer:
+      "O teorema de Rice afirma que para qualquer propriedade extensiva não trivial de um programa, não é possível determinar se um programa dado tem essa propriedade ou não",
+    options: [
+      "O teorema de Rice afirma que todos os problemas de decisão são decidíveis",
+      "O teorema de Rice afirma que a complexidade de tempo e espaço de um algoritmo são sempre iguais, independente dos seus inputs",
+      "O teorema de Rice afirma que um problema não recursivo sempre pode ser reescrito de forma recursiva",
+      "O teorema de Rice afirma que para qualquer propriedade extensiva não trivial de um programa, não é possível determinar se um programa dado tem essa propriedade ou não",
+    ],
+    topic: "Teoria da Computação",
+    difficulty: "hard",
+  },
+  {
+    id: 35,
+    question: "O que é o algoritmo RSA em criptografia?",
+    answer:
+      "O algoritmo RSA é um algoritmo de criptografia de chave pública que usa o produto de dois números primos grandes para gerar uma chave pública e uma chave privada para criptografar e descriptografar dados",
+    options: [
+      "O algoritmo RSA é um algoritmo de criptografia de chave simétrica que usa uma única chave para criptografar e descriptografar dados",
+      "O algoritmo RSA é um algoritmo de criptografia que usa uma matriz de substituição para criptografar dados",
+      "O algoritmo RSA é um algoritmo de compressão de dados que usa técnicas de codificação redundante para criptografar e descriptografar dados",
+      "O algoritmo RSA é um algoritmo de criptografia de chave pública que usa o produto de dois números primos grandes para gerar uma chave pública e uma chave privada para criptografar e descriptografar dados",
+    ],
+    topic: "Criptografia",
+    difficulty: "hard",
+  },
+  {
+    id: 36,
+    question: "O que é o problema do halting em teoria da computação?",
+    answer:
+      "O problema do halting é o problema de determinar se um programa pode parar (ou seja, entrar em um estado de 'halting') para qualquer entrada dada",
+    options: [
+      "O problema do halting é o problema de determinar a complexidade de tempo de um algoritmo",
+      "O problema do halting é o problema de determinar se um programa pode continuar após uma parada",
+      "O problema do halting descreve o problema de uma máquina poder parar aleatoriamente devido a um bit flip ou bit manipulation",
+      "O problema do halting é o problema de determinar se um programa pode parar (ou seja, entrar em um estado de 'halting') para qualquer entrada dada",
+    ],
+    topic: "",
+    difficulty: "hard",
+  },
+  {
+    id: 37,
+    question: "O que é um ORM em desenvolvimento de software?",
+    answer: "Uma técnica de programação que mapeia objetos de software para tabelas em um banco de dados relacional",
+    options: [
+      "Um modelo de desenvolvimento de software que enfatiza a colaboração entre clientes e desenvolvedores",
+      "Uma ferramenta para testes de unidade em desenvolvimento de software",
+      "Um conjunto de práticas de desenvolvimento ágil de software",
+      "Uma técnica de programação que mapeia objetos de software para tabelas em um banco de dados relacional",
+    ],
+    topic: "Desenvolvimento de Software",
+    difficulty: "medium",
+  },
+  {
+    id: 38,
+    question: "O que é uma arquitetura de microsserviços?",
+    answer:
+      "Um estilo de arquitetura de software que consiste em construir um aplicativo como um conjunto de serviços independentes, cada um executando um processo único e comunicando-se por meio de uma interface bem definida",
+    options: [
+      "Uma arquitetura de software que usa um único serviço para gerenciar todas as funções de um aplicativo",
+      "Um modelo de programação orientado a objetos que enfatiza a modularidade e o encapsulamento",
+      "Um padrão de projeto que descreve como criar objetos a partir de classes de objetos",
+      "Um estilo de arquitetura de software que consiste em construir um aplicativo como um conjunto de serviços independentes, cada um executando um processo único e comunicando-se por meio de uma interface bem definida",
+    ],
+    topic: "Arquitetura de Software",
+    difficulty: "hard",
+  },
+  {
+    id: 39,
+    question: "O que é injeção de dependência em desenvolvimento de software?",
+    answer:
+      "Um padrão de projeto de software que permite que objetos dependam uns dos outros sem que o objeto que depende precise saber a implementação específica do objeto de que está dependendo",
+    options: [
+      "Uma técnica de otimização de código para melhorar o desempenho do aplicativo",
+      "Um método de criptografia que protege informações confidenciais em trânsito",
+      "Um padrão de projeto que descreve como dividir um sistema em pequenos componentes independentes",
+      "Um padrão de projeto de software que permite que objetos dependam uns dos outros sem que o objeto que depende precise saber a implementação específica do objeto de que está dependendo",
+    ],
+    topic: "Padrões de Projeto de Software",
+    difficulty: "hard",
+  },
+  {
+    id: 40,
+    question: "Qual a diferença entre uma chave primária e uma chave estrangeira em um banco de dados?",
+    answer:
+      "Uma chave primária é um campo ou conjunto de campos em uma tabela de banco de dados que identifica exclusivamente cada registro na tabela. Já uma chave estrangeira é um campo ou conjunto de campos em uma tabela de banco de dados que faz referência a uma chave primária em outra tabela, estabelecendo uma relação entre as duas tabelas",
+    options: [
+      "Uma chave primária é um campo em uma tabela de banco de dados que armazena dados de texto, enquanto uma chave estrangeira armazena dados numéricos",
+      "Uma chave primária é usada para criptografar dados sensíveis em um banco de dados, enquanto uma chave estrangeira é usada para proteger informações confidenciais",
+      "Uma chave primária é usada para estabelecer uma relação entre duas tabelas em um banco de dados, enquanto uma chave estrangeira é um campo de dados normal em uma tabela de banco de dados",
+      "Uma chave primária é um campo ou conjunto de campos em uma tabela de banco de dados que identifica exclusivamente cada registro na tabela. Já uma chave estrangeira é um campo ou conjunto de campos em uma tabela de banco de dados que faz referência a uma chave primária em outra tabela, estabelecendo uma relação entre as duas tabelas",
+    ],
+    topic: "Banco de Dados",
+    difficulty: "medium",
+  },
+  {
+    id: 41,
+    question: "Quais são as principais limitações das redes neurais convolucionais?",
+    answer: "As redes neurais convolucionais incluem a necessidade de grandes quantidades de dados rotulados para o treinamento",
+    options: [
+      "As redes neurais convolucionais não podem ser usadas em problemas de classificação de imagem",
+      "As redes neurais convolucionais não podem ser treinadas em GPUs",
+      "As redes neurais convolucionais incluem a necessidade de grandes quantidades de dados rotulados para o treinamento",
+      "As redes neurais convolucionais não são capazes de lidar com dados de entrada em formatos diferentes de imagem",
+    ],
+    topic: "Inteligência Artificial",
+    difficulty: "hard",
+  },
+  {
+    id: 42,
+    question: "O que são modelos de linguagem em processamento de linguagem natural?",
+    answer:
+      "Modelos de linguagem em processamento de linguagem natural são modelos estatísticos que tentam estimar a probabilidade de uma sequência de palavras em um idioma dado um conjunto de dados de treinamento",
+    options: [
+      "Modelos de linguagem em processamento de linguagem natural são modelos que tentam analisar a gramática de um idioma para identificar erros de escrita",
+      "Modelos de linguagem em processamento de linguagem natural são modelos que tentam classificar texto em categorias pré-definidas",
+      "Modelos de linguagem em processamento de linguagem natural são modelos que tentam analisar a estrutura sintática de um texto para identificar relações entre palavras",
+      "Modelos de linguagem em processamento de linguagem natural são modelos estatísticos que tentam estimar a probabilidade de uma sequência de palavras em um idioma dado um conjunto de dados de treinamento",
+    ],
+    topic: "Processamento de Linguagem Natural",
+    difficulty: "hard",
   },
 ];
 
