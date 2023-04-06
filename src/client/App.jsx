@@ -364,7 +364,7 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
           </nav>
         </nav>
 
-        {showWindRoses ? <img src={compass} className='w-32 h-32 fixed right-8 top-24 z-50 invert' /> : <></>}
+        {showWindRoses ? <img src={compass} className='w-32 h-32 fixed right-8 top-24 z-40 invert' /> : <></>}
 
 
         <div id="terminal" ref={terminalRef} className='p-4 min-h-full flex-grow relative cursor-pointer' onClick={() => promptInputRef?.current?.focus()} disabled={question || rendering}>
@@ -382,7 +382,7 @@ function App({ onLoaded } = { onLoaded: async () => { } }) {
               afterRender={prompt?.afterRender}
             />
           })}
-          {!rendering && !question ? <form onSubmit={handleSubmit} className='h-12 bg-gray-900 sticky bottom-0 z-50 left-0 w-full flex items-center justify-center'>
+          {!rendering && !question ? <form onSubmit={handleSubmit} className='h-12 bg-gray-900 sticky bottom-0 z-30 left-0 w-full flex items-center justify-center'>
             <span className="flex mr-4 h-full items-center ml-0"><b className="text-orange-400">&gt;</b></span>
             <input ref={promptInputRef} type="text" name="prompt" value={prompt} onChange={handleChange} disabled={worldQueue.length > 0} className="w-full bg-transparent font-mono text-white outline-none" />
             <button type="submit" className='sr-only'></button>

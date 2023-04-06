@@ -21,25 +21,35 @@ module.exports = createModel(NARRATOR, (manager) => {
   manager.addNamedEntityText("answer", "rails", ["pt"], ["rails", "ruby on rails"]);
   manager.addNamedEntityText("answer", "map", ["pt"], ["mapa", "planta", "carta geográfica"]);
   manager.addNamedEntityText("answer", "ada", ["pt"], ["ada lovelace", "lovelace"]);
+  manager.addNamedEntityText("answer", "steps", ["pt"], ["passos", "pegadas"]);
 
   // npcs
   manager.addNamedEntityText("npc", Characters.BUN.id, ["pt"], ["coelho", "coelho branco"]);
 
   // Locations
   manager.addNamedEntityText("location", "house", ["pt"], ["casa", "casa branca"]);
+  manager.addNamedEntityText("location", "hill", ["pt"], ["encosta", "desfiladeiro"]);
   manager.addNamedEntityText("item", "ruins", ["pt"], ["ruínas", "excavação"]);
 
   // Items
   manager.addNamedEntityText("item", "note", ["pt"], ["nota", "leaflet"]);
+  manager.addNamedEntityText("item", "safe", ["pt"], ["cofre"]);
+  manager.addNamedEntityText("item", "sapphire", ["pt"], ["safira"]);
+  manager.addNamedEntityText("item", "jewerelyBox", ["pt"], ["caixa de jóias"]);
+  manager.addNamedEntityText("item", "quicknote", ["pt"], ["bilhete"]);
+  manager.addNamedEntityText("item", "countertop", ["pt"], ["bancada"]);
   manager.addNamedEntityText("item", "diary", ["pt"], ["diário", "caderno do bun", "caderno do coelho", "diário do coelho"]);
   manager.addNamedEntityText("item", "table", ["pt"], ["mesa", "escrivaninha", "papéis"]);
   manager.addNamedEntityText("item", "mailbox", ["pt"], ["caixa de correio", "correio", "caixa"]);
+  manager.addNamedEntityText("item", "painting", ["pt"], ["quadros", "quadro"]);
   manager.addNamedEntityText("item", "machine", ["pt"], ["máquina", "teletransportador"]);
   manager.addNamedEntityText("item", "window", ["pt"], ["janela", "janela entreaberta"]);
   manager.addNamedEntityText("item", "door", ["pt"], ["porta"]);
   manager.addNamedEntityText("item", "key", ["pt"], ["chave do bun", "chave"]);
   manager.addNamedEntityText("item", "ruby", ["pt"], ["rubi", "pedra", "gema"]);
   manager.addNamedEntityText("item", "trapdoor", ["pt"], ["alçapão"]);
+  manager.addNamedEntityText("item", "body", ["pt"], ["corpo"]);
+  manager.addNamedEntityText("item", "book", ["pt"], ["livro"]);
 
   // l04
   manager.addNamedEntityText("item", "board", ["pt"], ["lousa", "lousa imensa"]);
@@ -54,6 +64,7 @@ module.exports = createModel(NARRATOR, (manager) => {
   manager.addNamedEntityText("item", "locker", ["pt"], ["armário"]);
 
   // Go direction
+  manager.addDocument("pt", "ir a %location%", "goDirection");
   manager.addDocument("pt", "ir para %direction%", "goDirection");
   manager.addDocument("pt", "ir para %item%", "goDirection");
   manager.addDocument("pt", "ir pro %direction%", "goDirection");
@@ -67,6 +78,8 @@ module.exports = createModel(NARRATOR, (manager) => {
   manager.addDocument("pt", "descer as escadas", "goDown");
   manager.addDocument("pt", "subir o alçapão", "goUp");
   manager.addDocument("pt", "subir as escadas", "goUp");
+  manager.addDocument("pt", "subir a encosta", "goUp");
+  manager.addDocument("pt", "subir o desfiladeiro", "goUp");
 
   // Help
   manager.addDocument("pt", "ajuda", "help");

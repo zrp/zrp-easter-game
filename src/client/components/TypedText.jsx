@@ -39,6 +39,7 @@ export default function TypedText(props = { text: "", animate: false, interactiv
   const [isAnimating, setIsAnimating] = useState(false);
   const [dense] = useLocalStorage('layout:dense', false);
   const [fontSizeSm] = useLocalStorage('layout:font-sm', false);
+  const [typeEffect] = useLocalStorage('layout:typeEffect', true);
   const [typeSpeed] = useLocalStorage('layout:typeSpeed', 50);
 
   useEffect(() => {
@@ -46,7 +47,7 @@ export default function TypedText(props = { text: "", animate: false, interactiv
 
     const letters = ref.current.querySelectorAll('span:not(.word)');
 
-    if (animate) {
+    if (animate && typeEffect) {
       if (isAnimating) return;
 
       setIsAnimating(true);
@@ -67,7 +68,7 @@ export default function TypedText(props = { text: "", animate: false, interactiv
     }
 
     ref.current.style.opacity = 1;
-  }, [ref.current, animate]);
+  }, [ref.current, animate, typeEffect]);
 
   // Creates a copy of the original text
   let newText = text;

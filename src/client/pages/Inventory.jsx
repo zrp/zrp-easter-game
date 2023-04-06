@@ -16,7 +16,7 @@ export default function Inventory(props) {
   return <ul>{data?.map((item, index) => {
     return <li key={item.id} className="list-item list-outside list-disc ml-4">
       <p className="text-lg">{item.name} ({item.qty}x)</p>
-      <p className="text-sm text-gray-400">{item.description}</p>
+      <p className="text-sm text-gray-400">{item.inside ? item.description : item.descriptionEmpty ?? item.description}</p>
     </li>
   })}</ul>;
 }

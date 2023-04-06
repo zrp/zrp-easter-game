@@ -89,12 +89,9 @@ const l07 = {
                 "Obrigado, desenvolvedor, você me ajudou a recuperar os ovos e salvou a páscoa. Como recompensa, eu te darei um ovo, mas apenas se você tiver sido o melhor de todos. Veja bem, o que ocorreu aqui é parte de uma profecia antiga.\nO que ocorreu aqui ocorreu em todo o multiverso, e tantos outros bravos guerreiros me ajudaram tantas vezes, que apenas o melhor poderá ter acesso a este ovo mágico.",
               who: Characters.BUN,
             });
-            ctx.messages.push(`----------------------------\nFim\n----------------------------`);
-            ctx.messages.push(
-              `Você terminou o jogo! Meus parabéns!\nO seu score final foi: ${ctx.score}.\nVocê terminou o jogo após dar ${ctx.steps} passos.\nGanhará aquele que tiver o maior score e o menor número de passos.\nEm caso de empate, o critério de desempate será o horário, tire um print e mande para nós essa última mensagem.`,
-            );
+            ctx.messages.push(`----------------------------\nFim?\n----------------------------`);
           },
-          always: "#game.win",
+          always: "#l08",
         },
         battle: {
           entry: (ctx) => {

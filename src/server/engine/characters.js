@@ -11,7 +11,7 @@ const Characters = {
     id: "01-narrator",
     name: ">",
     showName: false,
-    fullName: "P",
+    fullName: "GPT-4",
     color: "text-blue-400",
     description: "Não é possível dizer quem é o dono desta voz, mas ela fala profundamente com você.",
   },
@@ -48,6 +48,14 @@ const Characters = {
     fullName: "GPT, Chat",
     color: "text-green-400",
     description: "",
+  },
+  NARRATOR_GPT: {
+    id: "06-gpt4",
+    name: "????",
+    showName: false,
+    fullName: "GPT-4",
+    color: "text-white",
+    description: "Não é possível dizer quem é o dono desta voz, mas ela fala profundamente com você.",
   },
 };
 

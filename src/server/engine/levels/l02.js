@@ -20,7 +20,7 @@ const l02Attic = {
       entry: assign({
         messages: addMessages([
           {
-            prompt: `Sotão\nVocê tropeça na janela e dá de cara no chão. No chão havia um alçapão que se abre com o impacto, e você começa a rolar por um túnel escuro.\nVocê cai num sotão mofado e úmido, iluminado apenas pela fraca luz que passa pelo túnel e pela fresta na porta ao leste.`,
+            prompt: `Sotão\nVocê desce pelas escadas, chegando a um sotão úmido e mofado. Ao leste você vê uma fraca luz passando por uma fresta.`,
           },
         ]),
         location: "Sotão",
@@ -30,9 +30,7 @@ const l02Attic = {
       on: {
         ...defaultActions,
         goEast: "at-door",
-        goUp: {
-          actions: (ctx) => ctx.messages.push("Você tenta subir, mas o alçapão está trancados."),
-        },
+        goUp: "#l01.inside-of-house.kitchen",
         openItem: {
           target: "at-door",
           cond: (_, ev) => ev?.value === "door",
@@ -43,7 +41,7 @@ const l02Attic = {
       entry: assign({
         messages: addMessages([
           {
-            prompt: `Você se aproxima da porta e ouve cochichos ao fundo. Você tenta abrir a porta, mas ela está trancada. Você vê um painel eletrônico ao lado, e acima dele escrito:\n-------------------\nDigite a senha para entrar!\nDica: é o melhor framework Ruby já feito\n-------------------`,
+            prompt: `Você se aproxima da porta e ouve cochichos ao fundo. Você tenta abrir a porta, mas ela está trancada. Você vê um painel eletrônico ao lado, e acima dele escrito:\n-------------------\nDigite a senha para entrar!\nDica: quanto mais você os dá, mais os deixa pra trás. O que são?\n-------------------`,
           },
         ]),
         steps: addSteps,
@@ -65,7 +63,7 @@ const l02Attic = {
               score: (ctx) => ctx.score + ctx.openLocks["l02-attic.entrance.door"]?.attemptsRemaining,
               openLocks: (ctx) => _.merge(ctx.openLocks, { "l02-attic.entrance.door": { open: true } }),
             }),
-            cond: (context, { value }) => value === "rails",
+            cond: (context, { value }) => value === "steps",
           },
           {
             target: "#game.game-over",
@@ -98,7 +96,7 @@ const l02Attic = {
                   attemptsRemaining: ctx.openLocks["l02-attic.entrance.door"]?.attemptsRemaining - 1,
                 },
               }),
-            cond: (context, { value }) => !value || value !== "rails",
+            cond: (context, { value }) => !value || value !== "steps",
           },
         ],
       },
@@ -114,7 +112,7 @@ const l02Tunnel = {
       entry: assign({
         messages: addMessages([
           {
-            prompt: `Base do Desfiladeiro\nVocê desce a encosta, mas ela é muito ingreme. Você perde o equilíbrio, e começa a rolar morro abaixo. Você chega à base do desfiladeiro. À oeste, você vê uma porta, ela parece ser protegida por uma senha. Você parece ver o que são ruínas de uma antiga escavação ao seu lado.`,
+            prompt: `Base do Desfiladeiro\nVocê desce a encosta, chegando à base do desfiladeiro. À oeste você vê uma porta, ela parece ser protegida por uma senha. Você parece ver o que são ruínas de uma antiga escavação ao seu lado.`,
           },
         ]),
         location: "Base do Desfiladeiro",
@@ -124,20 +122,19 @@ const l02Tunnel = {
       on: {
         ...defaultActions,
         goWest: "at-door",
+        goUp: "#l01.canyon",
+        goSouthEast: "#l01.canyon",
         seeItem: [
           {
             actions: (ctx) =>
               ctx.messages.push(
-                `Você vê nas ruínas uma pedra grande. Nela está escrito:\nIV.IV.MMXXIII\n-------------------\nA profecia\nJá não se sabe aonde estão os antigos moradores daquela casa, não deixaram nem um mapa. Ela parece ter sido abandonada às pressas. Dizem, eles, terem tomado conhecimento de uma profecia. Uma profecia terrível.`,
+                `Você vê nas ruínas uma pedra grande. Nela está escrito:\nIV.IV.MMXXIII\n-------------------\nA profecia\nJá não se sabe aonde estão os antigos moradores daquela casa, não deixaram nem um mapa. Ela parece ter sido abandonada às pressas. Dizem que eles tomaram conhecimento de uma profecia, uma profecia terrível.`,
               ),
             cond: (ctx, { value }) => value == "ruins",
           },
         ],
         grabItem: {
           actions: (ctx) => ctx.messages.push("A pedra é muito grande para ser retirada."),
-        },
-        goUp: {
-          actions: (ctx) => ctx.messages.push("Você não consegue subir a encosta, ela é muito ingrime."),
         },
         openItem: {
           target: "open-door",
@@ -162,7 +159,7 @@ const l02Tunnel = {
       entry: assign({
         messages: addMessages([
           {
-            prompt: `Você se aproxima da porta e ouve cochichos ao fundo. Você vê um painel eletrônico ao lado, e acima dele escrito:\n-----------------------------------------------\nEu tenho cidades, mas não tenho casas. Eu tenho montanhas, mas não tenho árvores. Eu tenho água, mas não tenho peixes. O que eu sou?\n-----------------------------------------------\n`,
+            prompt: `Você se aproxima da porta e ouve cochichos ao fundo. Você vê um painel eletrônico ao lado, e acima dele escrito:\nDigite a senha. Dica:\n-----------------------------------------------\nMaria tem 4 filhas, e cada filha tem um irmão. Quantos filhos maria possui?\n-----------------------------------------------\n`,
           },
         ]),
         steps: addSteps,
@@ -183,43 +180,31 @@ const l02Tunnel = {
         type: [
           {
             target: "#l02-boss",
-            actions: assign({
-              messages: [
-                {
-                  prompt:
-                    'Você digita a senha "Mapa". O monitor exibe: "Senha correta!".\nA porta começa a se abrir, mas o painel parece enlouquecer e com uma intensidade alarmante ele começa a pedir novas senhas para você.',
-                },
-              ],
-              score: (ctx) => ctx.score + ctx.openLocks["l02-tunnel.entrance.door"]?.attemptsRemaining,
-              openLocks: (ctx) => _.merge(ctx.openLocks, { "l02-tunnel.entrance.door": { open: true } }),
-            }),
-            cond: (context, { value }) => value === "map",
+            actions: (ctx) => {
+              ctx.messages.push(
+                'Você digita a senha. O monitor exibe: "Senha correta!".\nA porta começa a se abrir, mas o painel parece enlouquecer e com uma intensidade alarmante ele começa a pedir novas senhas para você.',
+              );
+              ctx.score = ctx.score + ctx.openLocks["l02-tunnel.entrance.door"].attemptsRemaining;
+              ctx.openLocks["l02-tunnel.entrance.door"] = true;
+            },
+            cond: (context, e) => !!e.value.match("5"),
           },
           {
             target: "#game.game-over",
-            actions: assign({
-              messages: [
-                {
-                  prompt:
-                    "Você digita sua senha. O monitor exibe:\nLimite de tentativas excedido, autodestruição em\n3...\n2...\n1...\nVocê vê uma fumaça preta sair da tranca. Não há mais nada que você possa fazer.",
-                },
-              ],
-            }),
-            cond: (context, { value }) => context.openLocks["l02-tunnel.entrance.door"]?.attemptsRemaining === 1,
+            actions: (ctx) => {
+              ctx.messages.push(
+                "Você digita sua senha. O monitor exibe:\nLimite de tentativas excedido, autodestruição em\n3...\n2...\n1...\nVocê vê uma fumaça preta sair da tranca. Não há mais nada que você possa fazer.",
+              );
+            },
+            cond: (context, { value }) => context.openLocks["l02-tunnel.entrance.door"].attemptsRemaining === 1,
           },
           {
-            actions: assign((ctx) => ({
-              openLocks: _.merge(ctx.openLocks, {
-                "l02-tunnel.entrance.door": {
-                  attemptsRemaining: ctx.openLocks["l02-tunnel.entrance.door"]?.attemptsRemaining - 1,
-                },
-              }),
-              messages: [
-                {
-                  prompt: `Você digita sua senha. O monitor exibe: "Senha incorreta! Tentativas restantes: ${ctx.openLocks["l02-tunnel.entrance.door"]?.attemptsRemaining}"`,
-                },
-              ],
-            })),
+            actions: (ctx) => {
+              ctx.openLocks["l02-tunnel.entrance.door"].attemptsRemaining -= 1;
+              ctx.messages.push(
+                `Você digita sua senha. O monitor exibe: "Senha incorreta! Tentativas restantes: ${ctx.openLocks["l02-tunnel.entrance.door"]?.attemptsRemaining}"`,
+              );
+            },
           },
         ],
       },

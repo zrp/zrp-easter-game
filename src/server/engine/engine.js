@@ -17,7 +17,7 @@ const { addMessages, addSteps, addVisit, getTransitionName } = require("./contex
 const { ITEMS, seeItem, readItem, item2txt, detachItem, ITEM_IDS } = require("./inventory");
 const { defaultActions } = require("./actions");
 
-const { l01, l02Attic, l02Tunnel, l02Boss, l03, l04, l05, l06, l07 } = require("./levels");
+const { l01, l02Attic, l02Tunnel, l02Boss, l03, l04, l05, l06, l07, l08 } = require("./levels");
 const moment = require("moment");
 
 moment.defineLocale("pt-br", {});
@@ -104,6 +104,9 @@ const createEngine = (user) => {
       "web.lab.trapdoor": {
         open: false,
       },
+      "house.painting": false,
+      "house.safe": false,
+      "house.quicknote": false,
     },
     l04: {
       powerRestored: false,
@@ -230,6 +233,30 @@ const createEngine = (user) => {
           ctx.messages.push({ prompt: seeItem(found) });
         },
       },
+      openItem: {
+        actions: (ctx, { value: item }) => {
+          const index = ctx.inventory.findIndex((obj) => !!obj.id?.match(item));
+
+          if (index < 0) {
+            ctx.messages.push({ prompt: "Você não está carregando este item." });
+            return;
+          }
+
+          const found = ctx.inventory[index];
+
+          if (!found.inside) {
+            ctx.messages.push("Já aberto.");
+          }
+
+          const { message, inside, newItem } = detachItem(found);
+
+          if (newItem) {
+            ctx.inventory[index] = newItem;
+            ctx.inventory.push(inside);
+            if (message && typeof message == "string") ctx.messages.push({ prompt: message });
+          }
+        },
+      },
       detachItem: {
         actions: (ctx, event) => {
           const [v0, v1] = event?.value ?? [];
@@ -293,6 +320,10 @@ const createEngine = (user) => {
       },
       win: {
         entry: async (ctx) => {
+          ctx.messages.push(
+            `------------------------------------------------------\nVocê terminou o jogo! Meus parabéns!\nO seu score final foi: ${ctx.score}.\nVocê terminou o jogo após dar ${ctx.steps} passos.\nGanhará aquele que tiver o maior score e o menor número de passos.\nEm caso de empate, o critério de desempate será o horário, tire um print e mande para nós essa última mensagem.`,
+          );
+
           await webhook.send({
             blocks: [
               {
@@ -352,6 +383,7 @@ const createEngine = (user) => {
       l05,
       l06,
       l07,
+      l08,
       hist: {
         type: "history",
         history: "shallow",
