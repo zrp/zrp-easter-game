@@ -1,3 +1,5 @@
+const _ = require("lodash");
+
 const questions = [
   {
     id: 1,
@@ -437,11 +439,11 @@ const questions = [
 ];
 
 const getRandomQuestion = (prevIds = []) => {
-  const randomIndex = Math.floor(Math.random() * questions.length);
+  const ids = _.uniq(prevIds);
 
-  const next = questions[randomIndex];
+  const availableQuestions = _.filter(questions, (q) => !ids.includes(q.id));
 
-  return prevIds.includes(next.id) ? getRandomQuestion(prevIds) : next;
+  return _.sample(availableQuestions.length > 0 ? availableQuestions : questions);
 };
 
 module.exports = {
