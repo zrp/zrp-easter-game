@@ -1,5 +1,6 @@
 require("dotenv").config();
 
+const { IncomingWebhook } = require("@slack/webhook");
 const ViteExpress = require("vite-express");
 const { createServer } = require("http");
 const { inspect } = require("@xstate/inspect");
@@ -22,8 +23,6 @@ createSocketIoServer(server);
   if (process.env.NODE_ENV !== "production") {
     ViteExpress.bind(app, server);
   } else {
-    const { IncomingWebhook } = require("@slack/webhook");
-
     const webhook = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL);
 
     await webhook.send({
@@ -41,7 +40,6 @@ createSocketIoServer(server);
           text: {
             type: "mrkdwn",
             text: `Parece que algo mudou! Mas não sabemos o que. Será que isso foi um sonho?! Você ouve um chamado distante, mas quem é essa voz que conversa com você? Ela parece familiar, mas diferente.`,
-            emoji: true,
           },
         },
       ],
