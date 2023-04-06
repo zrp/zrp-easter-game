@@ -71,7 +71,7 @@ const shortcuts = {
   },
 };
 
-const createEngine = (user) => {
+const createEngine = (user, skipQuestions = false) => {
   const subject = new Subject();
   const location$ = new Subject();
   const question$ = new Subject();
@@ -79,6 +79,7 @@ const createEngine = (user) => {
   const initialContext = {
     steps: 0,
     score: 0,
+    skipQuestions,
     name: user?.name?.givenName,
     currentQuestion: null,
     questions: [],
@@ -463,16 +464,18 @@ const createEngine = (user) => {
         await cb?.(error);
       });
     },
-    next: async (prompt) => {
+    next: async (prompt, skipUserMessage = false) => {
       l.debug(`Engine received prompt: "${prompt}"`);
 
-      l.debug(`Sending user his own message back`);
-      subject.next({
-        interactive: false,
-        animate: false,
-        prompt,
-        who: Characters.PLAYER,
-      });
+      if (!skipUserMessage) {
+        l.debug(`Sending user his own message back`);
+        subject.next({
+          interactive: false,
+          animate: false,
+          prompt,
+          who: Characters.PLAYER,
+        });
+      }
 
       // Try to capture shortcuts
       if (Object.keys(shortcuts).includes(prompt)) {

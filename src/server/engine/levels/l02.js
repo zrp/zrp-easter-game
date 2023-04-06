@@ -218,7 +218,7 @@ const l02Boss = {
   states: {
     idle: {
       after: {
-        2000: "battle",
+        2000: [{ target: "#l03", cond: (ctx) => ctx.skipQuestions }, { target: "battle" }],
       },
     },
     gg: {

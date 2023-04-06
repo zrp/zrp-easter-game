@@ -2,9 +2,14 @@ require("dotenv").config();
 
 // Local imports
 const { createSlackApp } = require("./bolt");
+const { trainAll } = require("./engine/models");
 
 // Create base express server
-const app = createSlackApp();
 
 // Start listening
-app.start();
+(async () => {
+  await trainAll();
+  const app = await createSlackApp();
+
+  app.start();
+})();

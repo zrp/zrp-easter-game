@@ -55,7 +55,7 @@ const l07 = {
         ctx.messages.push("Essa é a batalha final! Mostre ao GPT quem sabe mais de verdade. Esteja preparado!");
       },
       after: {
-        10000: "start-battle",
+        10000: [{ target: "#l08", cond: (ctx) => ctx.skipQuestions }, { target: "start-battle" }],
       },
     },
     "start-battle": {

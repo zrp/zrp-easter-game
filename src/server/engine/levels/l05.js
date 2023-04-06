@@ -18,7 +18,7 @@ const l05 = {
   states: {
     idle: {
       after: {
-        5000: "battle",
+        5000: [{ target: "#l06", cond: (ctx) => ctx.skipQuestions }, { target: "battle" }],
       },
     },
     gg: {
