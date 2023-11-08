@@ -11,7 +11,7 @@ ReactDOM.createRoot(root).render(
     <App onLoaded={() => {
       root.style.opacity = 1;
       loader.remove();
-      return new Promise(resolve => resolve());
+      return Promise.resolve();
     }} />
   </React.StrictMode>,
 )

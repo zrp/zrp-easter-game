@@ -28,5 +28,5 @@ createSocketIoServer(server);
 
   const PORT = process.env.PORT ?? 3000;
 
-  server.listen(PORT, () => l.info(`⚡ Server is listening on port ${PORT}...`));
+  server.listen(PORT, () => l.warn(`⚡ Server is listening on port ${PORT}...`));
 })();
